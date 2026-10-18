@@ -1,0 +1,57 @@
+# Python virtual environment
+.venv/
+venv/
+ENV/
+
+# Python caches and tooling
+__pycache__/
+*.py[cod]
+*$py.class
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# SQLite databases, journals, and backups
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+backups/
+
+# Personal / real LinkedIn data (keep real data private)
+data/reference/
+data/personal/
+data/real/
+data/*.zip
+*.zip
+data/Connections.csv
+data/Profile.csv
+data/Positions.csv
+data/Education.csv
+data/Skills.csv
+data/Invitations.csv
+data/messages.csv
+data/Ad_Targeting.csv
+data/Company Follows.csv
+data/Email Addresses.csv
+data/guide_messages.csv
+data/learning_coach_messages.csv
+data/Learning.csv
+data/learning_role_play_messages.csv
+data/Notes.csv
+data/PhoneNumbers.csv
+data/Profile Summary.csv
+data/Projects.csv
+data/Receipts_v2.csv
+data/Registration.csv
+data/Rich_Media.csv
+data/SavedJobAlerts.csv
+data/Whatsapp Phone Numbers.csv
+
+# Recordings & IDE logs
+*.webm
+*.webp
+*.mp4
+.system_generated/

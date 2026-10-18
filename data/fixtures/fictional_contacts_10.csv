@@ -1,0 +1,14 @@
+Notes:
+"When exporting your connection data, you may notice that some of the email addresses are missing."
+
+First Name,Last Name,URL,Email Address,Company,Position,Connected On
+Alice,Smith,https://www.linkedin.com/in/alicesmith,alice@example.com,Acme Corp,Product Manager,15 Oct 2026
+Bob,Jones,https://www.linkedin.com/in/bobjones,,InnoTech,Lead Robotics Engineer,12 Oct 2026
+Carol,Taylor,https://www.linkedin.com/in/caroltaylor,carol@example.org,Global Solutions,Data Scientist,10 Oct 2026
+David,Miller,https://www.linkedin.com/in/davidmiller,,Duke University,Research Assistant,08 Oct 2026
+Elena,Rostova,https://www.linkedin.com/in/elenarostova,elena@example.com,AI Horizons,"Director, Machine Learning",05 Oct 2026
+Frank,Chen,https://www.linkedin.com/in/frankchen,,Venture Works,Associate Partner,01 Oct 2026
+Grace,Hopper,https://www.linkedin.com/in/gracehopper,grace@example.edu,Computing Lab,Principal Systems Architect,20 Sep 2026
+Hassan,El-Sayed,https://www.linkedin.com/in/hassanelsayed,,Transit Dynamics,Urban Mobility Specialist,15 Sep 2026
+Iris,Dupont,https://www.linkedin.com/in/irisdupont,iris@example.fr,Paris Tech Hub,Software Engineer,10 Sep 2026
+Kenji,Sato,https://www.linkedin.com/in/kenjisato,,Tokyo Robotics,Autonomous Navigation Lead,01 Aug 2022

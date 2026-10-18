@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <a href="/" class="btn btn-outline btn-sm" id="btn-back-to-contacts" style="margin-bottom: 0.5rem;">
+      &larr; Back to Network
+    </a>
+    <h2 class="page-title">Import LinkedIn Connections</h2>
+  </div>
+</div>
+
+<div class="card" style="max-width: 680px; margin: 0 auto;">
+  <h3 class="card-title">Upload Connections.csv</h3>
+  <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+    Upload your standard LinkedIn data export file. Inner Circle safely previews all records, checks for existing contacts by URL or email (or deterministic fingerprint), and ensures your existing manual edits are never erased.
+  </p>
+
+  <form action="/import/preview" method="post" enctype="multipart/form-data" id="import-upload-form">
+    <div class="form-group" style="margin-bottom: 1.5rem;">
+      <label class="form-label" for="file">Select Connections CSV File</label>
+      <input type="file" name="file" id="file" class="form-control" accept=".csv,text/csv" required>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:0.8rem; color:var(--text-dim);">
+        Safe 2-step process: Preview &rarr; Confirmation
+      </span>
+      <button type="submit" class="btn btn-primary" id="btn-preview-import">
+        Analyze & Preview Import
+      </button>
+    </div>
+  </form>
+
+  <hr style="border: 0; border-top: 1px solid var(--border-subtle); margin: 2rem 0 1.5rem 0;">
+
+  <div>
+    <h4 style="font-size: 0.85rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.5rem;">
+      Quick Test with Demo Fixtures
+    </h4>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+      Want to test without uploading your own file? You can run a test preview using the built-in fictional fixture.
+    </p>
+    <form action="/import/demo" method="post" style="display:inline;">
+      <button type="submit" class="btn btn-secondary btn-sm" id="btn-import-demo-fixture">
+        Preview Built-in Fictional 10 Contacts
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

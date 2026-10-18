@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <a href="/" class="btn btn-outline btn-sm" id="btn-back-to-contacts" style="margin-bottom: 0.5rem;">
+      &larr; Back to Network
+    </a>
+    <h2 class="page-title">{{ person.display_name }}</h2>
+  </div>
+  <div style="display: flex; gap: 0.75rem;">
+    {% if relationship %}
+    <form action="/contacts/{{ person.id }}/disconnect" method="post" style="display:inline;">
+      <button type="submit" class="btn btn-outline" id="btn-disconnect-edge">
+        Disconnect Edge
+      </button>
+    </form>
+    {% else %}
+    <form action="/contacts/{{ person.id }}/reconnect" method="post" style="display:inline;">
+      <button type="submit" class="btn btn-primary" id="btn-reconnect-edge">
+        Reconnect Edge
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<form action="/contacts/{{ person.id }}/edit" method="post" id="contact-edit-form">
+  <div class="detail-layout">
+    <div class="main-column">
+      <!-- Section 1: Person Facts -->
+      <section class="card" id="section-person-facts">
+        <h3 class="card-title">
+          <span>Person Information (Facts about {{ person.first_name }})</span>
+        </h3>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="first_name">First Name *</label>
+            <input type="text" name="first_name" id="first_name" class="form-control" value="{{ person.first_name }}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="last_name">Last Name</label>
+            <input type="text" name="last_name" id="last_name" class="form-control" value="{{ person.last_name }}">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="company">Company</label>
+            <input type="text" name="company" id="company" class="form-control" value="{{ person.company or '' }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="job_title">Position / Title</label>
+            <input type="text" name="job_title" id="job_title" class="form-control" value="{{ person.job_title or '' }}">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="location">Location (Manually Editable)</label>
+          <input type="text" name="location" id="location" class="form-control" placeholder="e.g. London, UK or Washington, DC" value="{{ person.location or '' }}">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="email">Email Address</label>
+            <input type="email" name="email" id="email" class="form-control" value="{{ person.email or '' }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="profile_url">LinkedIn URL</label>
+            <input type="url" name="profile_url" id="profile_url" class="form-control" value="{{ person.profile_url or '' }}">
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: Relationship Context -->
+      <section class="card" id="section-relationship-context">
+        <h3 class="card-title">
+          <span>Your Relationship</span>
+          {% if relationship %}
+          <span class="badge-action badge-create">Connected</span>
+          {% else %}
+          <span class="badge-action badge-unchanged">Disconnected</span>
+          {% endif %}
+        </h3>
+
+        <div class="form-group">
+          <label class="form-label" for="connected_on">Connected On Date</label>
+          <input 
+            type="date" 
+            name="connected_on" 
+            id="connected_on" 
+            class="form-control" 
+            value="{{ relationship.connected_on.isoformat() if relationship and relationship.connected_on else '' }}"
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="notes">Relationship Context & Conversation Notes</label>
+          <textarea 
+            name="notes" 
+            id="notes" 
+            rows="4" 
+            class="form-control" 
+            placeholder="Record where you met, shared interests, follow-up topics, or commitments..."
+          >{{ relationship.notes if relationship and relationship.notes else '' }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="btn-save-contact">
+          Save Changes
+        </button>
+      </section>
+    </div>
+
+    <!-- Sidebar / Metadata & Danger Zone -->
+    <div class="side-column">
+      <div class="card">
+        <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem; color: var(--text-muted);">Record Metadata</h4>
+        <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.4rem;">
+          Person ID: <code>{{ person.id[:8] }}...</code>
+        </p>
+        <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.4rem;">
+          Created: {{ person.created_at[:10] }}
+        </p>
+        <p style="font-size: 0.8rem; color: var(--text-dim);">
+          Last Updated: {{ person.updated_at[:10] }}
+        </p>
+      </div>
+
+      <div class="card" style="border-color: rgba(244, 63, 94, 0.2);">
+        <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: #fca5a5;">Danger Zone</h4>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+          Deleting this person permanently removes their record and all {{ incident_edge_count }} connection edge(s).
+        </p>
+        <button 
+          type="button" 
+          class="btn btn-danger btn-sm" 
+          id="btn-open-delete-modal"
+          onclick="document.getElementById('delete-modal').style.display='flex'"
+        >
+          Delete Person
+        </button>
+      </div>
+    </div>
+  </div>
+</form>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:100; align-items:center; justify-content:center;">
+  <div class="card" style="max-width: 480px; width: 90%; background: var(--bg-secondary); border-color: rgba(244, 63, 94, 0.4);">
+    <h3 style="color:#fca5a5; margin-bottom: 0.75rem;">Confirm Permanent Deletion</h3>
+    <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+      Are you sure you want to delete <strong>{{ person.display_name }}</strong>? This will permanently erase their node and all <strong>{{ incident_edge_count }} incident connection edge(s)</strong>.
+    </p>
+    <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+      <button type="button" class="btn btn-secondary" onclick="document.getElementById('delete-modal').style.display='none'">
+        Cancel
+      </button>
+      <form action="/contacts/{{ person.id }}/delete" method="post">
+        <button type="submit" class="btn btn-danger" id="btn-confirm-delete">
+          Yes, Delete Person
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

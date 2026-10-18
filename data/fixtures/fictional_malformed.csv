@@ -1,0 +1,8 @@
+Preamble note without quotes
+Another preamble line
+
+First Name,Last Name,URL,Email Address,Company,Position,Connected On
+,,https://www.linkedin.com/in/noname,noname@example.com,Ghost Inc,Nobody,10 Oct 2026
+Valid,Person,https://www.linkedin.com/in/validperson,,Tech Inc,Developer,invalid-date-string
+,,,,,,""
+OnlyFirstName,,https://www.linkedin.com/in/firstnameonly,,Solo LLC,Founder,05 Oct 2026

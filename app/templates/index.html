@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="controls-bar">
+  <form action="/" method="get" class="search-form" id="search-form">
+    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <input 
+      type="text" 
+      name="q" 
+      id="search-input" 
+      class="search-input" 
+      placeholder="Search contacts by name, company, title, or location..." 
+      value="{{ search_query or '' }}"
+    >
+  </form>
+
+  <div class="stats-pill-group">
+    <div class="stat-pill" id="stat-connected-contacts">
+      Connected: <strong>{{ contacts | length }}</strong>
+    </div>
+    {% if disconnected_persons %}
+    <div class="stat-pill" id="stat-disconnected-contacts">
+      Archived/Disconnected: <strong>{{ disconnected_persons | length }}</strong>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% if contacts %}
+<section class="contacts-grid" id="contacts-list">
+  {% for item in contacts %}
+  <article class="contact-card" id="contact-card-{{ item.person.id }}">
+    <div>
+      <div class="contact-top">
+        <div class="avatar">
+          {{ item.person.first_name[0] if item.person.first_name else '' }}{{ item.person.last_name[0] if item.person.last_name else '' }}
+        </div>
+        <div class="contact-info">
+          <a href="/contacts/{{ item.person.id }}" class="contact-name" id="contact-link-{{ item.person.id }}">
+            {{ item.person.display_name }}
+          </a>
+          <p class="contact-title">{{ item.person.job_title or "Role unrecorded" }}</p>
+          {% if item.person.company %}
+          <p class="contact-company">{{ item.person.company }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="contact-meta">
+        {% if item.person.location %}
+        <span class="meta-badge" title="Location">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          {{ item.person.location }}
+        </span>
+        {% endif %}
+
+        {% if item.relationship.connected_on %}
+        <span class="meta-badge" title="Connected Date">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          Connected {{ item.relationship.connected_on.strftime('%b %d, %Y') }}
+        </span>
+        {% endif %}
+
+        {% if item.person.email %}
+        <span class="meta-badge" title="Email Available">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <polyline points="22,6 12,13 2,6"></polyline>
+          </svg>
+          {{ item.person.email }}
+        </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="contact-actions">
+      <a href="/contacts/{{ item.person.id }}" class="btn btn-secondary btn-sm" id="btn-view-{{ item.person.id }}">
+        View Details
+      </a>
+      <form action="/contacts/{{ item.person.id }}/disconnect" method="post" style="display:inline;">
+        <button type="submit" class="btn btn-outline btn-sm" id="btn-disconnect-{{ item.person.id }}" title="Disconnect edge without deleting person">
+          Disconnect
+        </button>
+      </form>
+    </div>
+  </article>
+  {% endfor %}
+</section>
+
+{% else %}
+<section class="empty-state" id="empty-state-view">
+  <div class="empty-icon">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+      <circle cx="9" cy="7" r="4"></circle>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+    </svg>
+  </div>
+  {% if search_query %}
+  <h2 class="empty-title">No contacts matching "{{ search_query }}"</h2>
+  <p class="empty-desc">Try searching by a different name, company, or clearing your search term.</p>
+  <a href="/" class="btn btn-secondary">Clear Search</a>
+  {% else %}
+  <h2 class="empty-title">Your Network is Ready to Grow</h2>
+  <p class="empty-desc">Import your existing LinkedIn Connections CSV export or manually add contacts to start organizing your relationships.</p>
+  <div style="display:flex; justify-content:center; gap:0.75rem;">
+    <a href="/import" class="btn btn-primary" id="empty-import-btn">Import Connections.csv</a>
+    <a href="/contacts/new" class="btn btn-secondary" id="empty-add-btn">Add Contact Manually</a>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
+{% if disconnected_persons %}
+<section class="disconnected-section" id="disconnected-section">
+  <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--text-muted);">
+    Disconnected People in Database ({{ disconnected_persons | length }})
+  </h3>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Company</th>
+          <th>Job Title</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in disconnected_persons %}
+        <tr id="disconnected-row-{{ p.id }}">
+          <td><strong>{{ p.display_name }}</strong></td>
+          <td>{{ p.company or "—" }}</td>
+          <td>{{ p.job_title or "—" }}</td>
+          <td>
+            <form action="/contacts/{{ p.id }}/reconnect" method="post" style="display:inline;">
+              <button type="submit" class="btn btn-secondary btn-sm" id="btn-reconnect-{{ p.id }}">
+                Reconnect to Focal Person
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}

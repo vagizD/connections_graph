@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Inner Circle — Professional Relationship Manager{% endblock %}</title>
+  <meta name="description" content="Inner Circle helps you organize, explore, maintain, and expand your professional connections.">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+  <header class="navbar">
+    <div class="container nav-container">
+      <div class="brand-wrapper">
+        <a href="/" class="brand-logo" id="brand-logo-link" aria-label="Inner Circle Home">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9a5 5 0 1 1 10 0 5 5 0 0 1-10 0z"/>
+          </svg>
+        </a>
+        <div class="brand-text">
+          <a href="/"><h1>Inner Circle</h1></a>
+          <span class="brand-tag">Relationship Manager</span>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        {% if focal_person %}
+        <div class="focal-badge" id="focal-person-badge" title="Focal Person representing your network origin">
+          <span class="focal-dot"></span>
+          <span><strong>{{ focal_person.display_name }}</strong> (You)</span>
+        </div>
+        {% endif %}
+        <a href="/import" class="btn btn-secondary" id="nav-import-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+          </svg>
+          Import CSV
+        </a>
+        <a href="/contacts/new" class="btn btn-primary" id="nav-add-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add Contact
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    {% if message %}
+    <div class="alert-banner alert-success" id="alert-banner">
+      <span>{{ message }}</span>
+      <button type="button" class="btn btn-sm btn-outline" onclick="this.parentElement.remove()">Dismiss</button>
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert-banner alert-error" id="error-banner">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn-sm btn-outline" onclick="this.parentElement.remove()">Dismiss</button>
+    </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

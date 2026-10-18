@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <a href="/import" class="btn btn-outline btn-sm" id="btn-back-to-import" style="margin-bottom: 0.5rem;">
+      &larr; Choose Another File
+    </a>
+    <h2 class="page-title">Import Preview & Validation Report</h2>
+  </div>
+  <div>
+    {% if preview.can_commit %}
+    <form action="/import/commit" method="post" id="commit-import-form">
+      <input type="hidden" name="csv_payload" value="{{ csv_payload }}">
+      <button type="submit" class="btn btn-primary" id="btn-confirm-commit">
+        Confirm & Commit Import ({{ preview.create_count }} new, {{ preview.update_count }} updates)
+      </button>
+    </form>
+    {% else %}
+    <button type="button" class="btn btn-secondary" disabled title="Resolve conflicts or errors before committing">
+      Cannot Commit (Conflicts/Errors Detected)
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+<section class="preview-summary-grid">
+  <div class="summary-card">
+    <div class="summary-num" style="color: var(--text-main);">{{ preview.total_rows }}</div>
+    <div class="summary-label">Total Rows</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-num" style="color: var(--accent-teal);">{{ preview.create_count }}</div>
+    <div class="summary-label">To Create</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-num" style="color: var(--accent-blue);">{{ preview.update_count }}</div>
+    <div class="summary-label">To Enrich</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-num" style="color: var(--text-dim);">{{ preview.unchanged_count }}</div>
+    <div class="summary-label">Unchanged</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-num" style="color: var(--accent-amber);">{{ preview.conflict_count }}</div>
+    <div class="summary-label">Conflicts</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-num" style="color: var(--accent-rose);">{{ preview.error_count }}</div>
+    <div class="summary-label">Errors</div>
+  </div>
+</section>
+
+{% if preview.conflicts or preview.error_count > 0 %}
+<div class="alert-banner alert-error" style="margin-bottom: 1.5rem;">
+  <div>
+    <strong>Import Blocked:</strong> Conflicting populated values or errors were detected. Under the safety policy, unresolved conflicts block the import transaction to protect your database.
+  </div>
+</div>
+{% endif %}
+
+<div class="table-wrapper" style="margin-bottom: 3rem;">
+  <table class="data-table" id="import-preview-table">
+    <thead>
+      <tr>
+        <th style="width: 50px;">#</th>
+        <th>Status</th>
+        <th>Name</th>
+        <th>Company & Title</th>
+        <th>Connected On</th>
+        <th>Match Details / Conflicts</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in preview.rows %}
+      <tr id="preview-row-{{ item.row_number }}">
+        <td>{{ item.row_number }}</td>
+        <td>
+          {% if item.action == 'CREATE' %}
+          <span class="badge-action badge-create">CREATE</span>
+          {% elif item.action == 'UPDATE' %}
+          <span class="badge-action badge-update">UPDATE</span>
+          {% elif item.action == 'UNCHANGED' %}
+          <span class="badge-action badge-unchanged">UNCHANGED</span>
+          {% elif item.action == 'CONFLICT' %}
+          <span class="badge-action badge-conflict">CONFLICT</span>
+          {% else %}
+          <span class="badge-action badge-error">ERROR</span>
+          {% endif %}
+        </td>
+        <td><strong>{{ item.display_name }}</strong></td>
+        <td>
+          <div>{{ item.row_data.company or "—" }}</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">{{ item.row_data.job_title or "" }}</div>
+        </td>
+        <td>
+          {{ item.row_data.connected_on.strftime('%b %d, %Y') if item.row_data.connected_on else "—" }}
+        </td>
+        <td>
+          {% if item.action == 'CREATE' %}
+          <span style="color: var(--text-muted); font-size: 0.8rem;">New person node & edge to you</span>
+          {% elif item.action == 'UPDATE' %}
+          <span style="color: var(--accent-blue); font-size: 0.8rem;">
+            Matched by {{ item.matched_by }}. Filling: {{ item.filled_fields.keys() | join(', ') }}
+          </span>
+          {% elif item.action == 'UNCHANGED' %}
+          <span style="color: var(--text-dim); font-size: 0.8rem;">Exact match by {{ item.matched_by }} (no changes)</span>
+          {% elif item.action == 'CONFLICT' %}
+          <div style="color: #fbbf24; font-size: 0.8rem;">
+            {% for c in item.conflicts %}
+            <div>Conflict on <em>{{ c.field_name }}</em>: Database has "{{ c.existing_value }}", CSV has "{{ c.imported_value }}"</div>
+            {% endfor %}
+          </div>
+          {% elif item.error_message %}
+          <span style="color: #fb7185; font-size: 0.8rem;">{{ item.error_message }}</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
