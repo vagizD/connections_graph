@@ -9,6 +9,7 @@ services:
     environment:
       # Prototype mode tier: A (Contacts & Grouping), B (+ Tasks), C (+ Network Graph, default)
       - PROTOTYPE_MODE=${PROTOTYPE_MODE:-C}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - HOST=0.0.0.0
       - PORT=8000
     volumes:

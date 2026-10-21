@@ -2,6 +2,9 @@
 .venv/
 venv/
 ENV/
+# Environment secrets
+.env
+.env.local
 
 # Python caches and tooling
 __pycache__/
