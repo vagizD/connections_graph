@@ -723,3 +723,42 @@ def test_ai_split_workflow_and_statistics(client: TestClient) -> None:
     res_cleared_api = client.get("/api/split")
     assert res_cleared_api.status_code == 200
     assert res_cleared_api.json() == {"active": False, "split": None}
+
+
+def test_voice_button_shadowed_when_gemini_key_not_set(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Create contact
+    res_create = client.post(
+        "/contacts/new",
+        data={
+            "first_name": "Jordan",
+            "last_name": "Bell",
+            "company": "AudioTech",
+            "job_title": "Audio Engineer",
+            "connected_on": "2026-10-15",
+        },
+        follow_redirects=True,
+    )
+    import re
+
+    match = re.search(r'/contacts/([a-f0-9\-]+)" class="contact-name"', res_create.text)
+    assert match is not None
+    person_id = match.group(1)
+
+    # 1. When GEMINI_API_KEY and GOOGLE_API_KEY are unset/empty
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    res_no_key = client.get(f"/contacts/{person_id}")
+    assert res_no_key.status_code == 200
+    assert "btn-voice-shadowed" in res_no_key.text
+    assert "Voice Note (Key Required)" in res_no_key.text
+    assert "Voice transcription requires GEMINI_API_KEY" in res_no_key.text
+
+    # 2. When GEMINI_API_KEY is set
+    monkeypatch.setenv("GEMINI_API_KEY", "test-gemini-key")
+    res_with_key = client.get(f"/contacts/{person_id}")
+    assert res_with_key.status_code == 200
+    assert "btn-voice-shadowed" not in res_with_key.text
+    assert "Record Voice Note" in res_with_key.text
+    assert "Voice Note (Key Required)" not in res_with_key.text

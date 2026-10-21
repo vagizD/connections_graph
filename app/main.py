@@ -94,6 +94,17 @@ app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
+def is_gemini_configured() -> bool:
+    import os
+
+    return bool(
+        os.environ.get("GEMINI_API_KEY", "").strip() or os.environ.get("GOOGLE_API_KEY", "").strip()
+    )
+
+
+templates.env.globals["is_gemini_configured"] = is_gemini_configured
+
+
 def _parse_optional_date(val: str | None) -> date | None:
     if not val or not val.strip():
         return None
@@ -569,6 +580,7 @@ async def contact_detail_view(
             "has_tasks": has_tasks,
             "has_graph": has_graph,
             "all_prototype_tiers": TIERS,
+            "has_gemini_key": is_gemini_configured(),
         },
     )
 

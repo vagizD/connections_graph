@@ -330,16 +330,31 @@
           <!-- Voice action & Submit button directly under the interaction space -->
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
             <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+              {% if has_gemini_key %}
               <button 
                 type="button" 
                 class="btn btn-outline btn-sm" 
                 id="btn-voice-record" 
                 onclick="toggleVoiceRecording()" 
                 style="display:inline-flex; align-items:center; gap:0.4rem; font-size:0.8rem;"
+                title="Record audio note for AI speech transcription"
               >
                 <span>🎙️</span>
                 <span id="voice-btn-label">Record Voice Note</span>
               </button>
+              {% else %}
+              <button 
+                type="button" 
+                class="btn btn-outline btn-sm btn-voice-shadowed" 
+                id="btn-voice-record" 
+                disabled 
+                style="display:inline-flex; align-items:center; gap:0.4rem; font-size:0.8rem; opacity:0.4; cursor:not-allowed; filter:grayscale(1); background:rgba(255,255,255,0.02); border-color:rgba(255,255,255,0.08);"
+                title="Voice transcription requires GEMINI_API_KEY. Set GEMINI_API_KEY in .env or your environment to enable."
+              >
+                <span style="opacity:0.6;">🎙️</span>
+                <span id="voice-btn-label" style="color:var(--text-dim);">Voice Note (Key Required)</span>
+              </button>
+              {% endif %}
 
               <div id="voice-recording-status" style="display:none; align-items:center; gap:0.5rem;">
                 <span class="recording-dot"></span>
@@ -478,7 +493,13 @@
   let recordSeconds = 0;
   let isRecording = false;
 
+  const hasGeminiKey = {% if has_gemini_key %}true{% else %}false{% endif %};
+
   async function toggleVoiceRecording() {
+    if (!hasGeminiKey) {
+      alert("Voice notes require a GEMINI_API_KEY. Please set GEMINI_API_KEY in your .env file or environment to enable voice transcription.");
+      return;
+    }
     if (isRecording) {
       stopVoiceRecording();
     } else {
