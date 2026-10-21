@@ -21,6 +21,11 @@ from app.ai_summarizer import (
     process_audio_interaction,
     process_text_interaction,
 )
+from app.config import (
+    TIERS,
+    resolve_prototype_mode,
+    set_global_prototype_mode,
+)
 from app.csv_parser import parse_connections_csv
 from app.database import get_db
 from app.importer import ImportCommitResult, commit_import, preview_import
@@ -69,11 +74,13 @@ BASE_DIR = Path(__file__).parent
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Run migrations and ensure dev owner on startup
     apply_migrations()
+    tier = resolve_prototype_mode()
     with get_db() as conn:
         ensure_dev_owner(conn, owner_id=DEV_OWNER_ID)
-        backfill_tasks_from_existing_interactions(conn, owner_id=DEV_OWNER_ID)
-        if count_pending_tasks(conn, DEV_OWNER_ID) < 5:
-            seed_sample_tasks_for_test_contacts(conn, owner_id=DEV_OWNER_ID)
+        if tier.has_tasks:
+            backfill_tasks_from_existing_interactions(conn, owner_id=DEV_OWNER_ID)
+            if count_pending_tasks(conn, DEV_OWNER_ID) < 5:
+                seed_sample_tasks_for_test_contacts(conn, owner_id=DEV_OWNER_ID)
     yield
 
 
@@ -99,6 +106,7 @@ def _parse_optional_date(val: str | None) -> date | None:
 @app.get("/", response_class=HTMLResponse)
 async def index_view(
     request: Request,
+    mode: str | None = None,
     tab: str | None = None,
     view: str | None = None,
     q: str | None = None,
@@ -112,6 +120,10 @@ async def index_view(
     message: str | None = None,
     error: str | None = None,
 ) -> HTMLResponse:
+    tier = resolve_prototype_mode(mode)
+    has_tasks = tier.has_tasks
+    has_graph = tier.has_graph
+
     with get_db() as conn:
         owner = get_owner(conn, DEV_OWNER_ID)
         if not owner or not owner.focal_person_id:
@@ -175,11 +187,16 @@ async def index_view(
             ]
         )
 
-        all_tasks = list_tasks(conn, DEV_OWNER_ID)
-        pending_tasks_count = sum(1 for t in all_tasks if t.status == "pending")
-        completed_tasks_count = sum(1 for t in all_tasks if t.status == "completed")
+        if has_tasks:
+            all_tasks = list_tasks(conn, DEV_OWNER_ID)
+            pending_tasks_count = sum(1 for t in all_tasks if t.status == "pending")
+            completed_tasks_count = sum(1 for t in all_tasks if t.status == "completed")
+        else:
+            all_tasks = []
+            pending_tasks_count = 0
+            completed_tasks_count = 0
 
-        if tab == "tasks":
+        if tab == "tasks" and has_tasks:
             active_tab = "tasks"
         elif tab == "contacts":
             active_tab = "contacts"
@@ -202,16 +219,20 @@ async def index_view(
                         visible_contacts.append(c)
             split_groups = get_grouped_split_view(active_split, visible_contacts)
 
-        graph_payload = get_network_graph_payload(
-            conn, DEV_OWNER_ID, focal, filter_result, active_split=active_split
-        )
+        effective_view_mode = (view or "list") if has_graph else "list"
+        if has_graph:
+            graph_payload = get_network_graph_payload(
+                conn, DEV_OWNER_ID, focal, filter_result, active_split=active_split
+            )
+        else:
+            graph_payload = {"nodes": [], "edges": [], "clusters": []}
 
     return templates.TemplateResponse(
         request,
         "index.html",
         {
             "active_tab": active_tab,
-            "view_mode": view or "list",
+            "view_mode": effective_view_mode,
             "focal_person": focal,
             "filter_result": filter_result,
             "facets": facets,
@@ -233,6 +254,11 @@ async def index_view(
             "graph_data": graph_payload,
             "active_split": active_split,
             "split_groups": split_groups,
+            "prototype_mode": tier.mode,
+            "prototype_tier": tier,
+            "has_tasks": has_tasks,
+            "has_graph": has_graph,
+            "all_prototype_tiers": TIERS,
         },
     )
 
@@ -492,9 +518,14 @@ async def reconnect_existing(
 async def contact_detail_view(
     request: Request,
     person_id: str,
+    mode: str | None = None,
     message: str | None = None,
     error: str | None = None,
 ) -> HTMLResponse:
+    tier = resolve_prototype_mode(mode)
+    has_tasks = tier.has_tasks
+    has_graph = tier.has_graph
+
     with get_db() as conn:
         owner = get_owner(conn, DEV_OWNER_ID)
         assert owner is not None and owner.focal_person_id is not None
@@ -506,8 +537,12 @@ async def contact_detail_view(
         focal = get_person(conn, DEV_OWNER_ID, owner.focal_person_id)
 
         interactions = list_interactions_for_relationship(conn, DEV_OWNER_ID, rel.id) if rel else []
-        contact_tasks = list_tasks(conn, DEV_OWNER_ID, contact_person_id=person.id)
-        pending_tasks_count = count_pending_tasks(conn, DEV_OWNER_ID)
+        if has_tasks:
+            contact_tasks = list_tasks(conn, DEV_OWNER_ID, contact_person_id=person.id)
+            pending_tasks_count = count_pending_tasks(conn, DEV_OWNER_ID)
+        else:
+            contact_tasks = []
+            pending_tasks_count = 0
 
         cursor = conn.execute(
             "SELECT COUNT(*) as c FROM relationships "
@@ -529,6 +564,11 @@ async def contact_detail_view(
             "incident_edge_count": edge_count,
             "message": message,
             "error": error,
+            "prototype_mode": tier.mode,
+            "prototype_tier": tier,
+            "has_tasks": has_tasks,
+            "has_graph": has_graph,
+            "all_prototype_tiers": TIERS,
         },
     )
 
@@ -1061,9 +1101,15 @@ async def create_task_endpoint(
     redirect_to: Annotated[str, Form()] = "",
 ) -> RedirectResponse:
     target_url = redirect_to.strip() or "/?tab=tasks"
-    clean_title = title.strip()
+    tier = resolve_prototype_mode()
     sep = "&" if "?" in target_url else "?"
+    if not tier.has_tasks:
+        return RedirectResponse(
+            url=f"{target_url}{sep}error=Tasks+are+disabled+in+{tier.name}",
+            status_code=303,
+        )
 
+    clean_title = title.strip()
     if not clean_title:
         return RedirectResponse(
             url=f"{target_url}{sep}error=Task+title+cannot+be+empty",
@@ -1100,10 +1146,17 @@ async def toggle_task_endpoint(
     redirect_to: Annotated[str, Form()] = "",
 ) -> RedirectResponse:
     target_url = redirect_to.strip() or "/?tab=tasks"
+    tier = resolve_prototype_mode()
+    sep = "&" if "?" in target_url else "?"
+    if not tier.has_tasks:
+        return RedirectResponse(
+            url=f"{target_url}{sep}error=Tasks+are+disabled+in+{tier.name}",
+            status_code=303,
+        )
+
     with get_db() as conn:
         toggle_task_status(conn, DEV_OWNER_ID, task_id)
 
-    sep = "&" if "?" in target_url else "?"
     return RedirectResponse(url=f"{target_url}{sep}message=Task+updated", status_code=303)
 
 
@@ -1113,8 +1166,56 @@ async def delete_task_endpoint(
     redirect_to: Annotated[str, Form()] = "",
 ) -> RedirectResponse:
     target_url = redirect_to.strip() or "/?tab=tasks"
+    tier = resolve_prototype_mode()
+    sep = "&" if "?" in target_url else "?"
+    if not tier.has_tasks:
+        return RedirectResponse(
+            url=f"{target_url}{sep}error=Tasks+are+disabled+in+{tier.name}",
+            status_code=303,
+        )
+
     with get_db() as conn:
         delete_task(conn, DEV_OWNER_ID, task_id)
 
-    sep = "&" if "?" in target_url else "?"
     return RedirectResponse(url=f"{target_url}{sep}message=Task+deleted", status_code=303)
+
+
+# ============================================================================
+# Mode Switcher Route (for interactive live demo switching)
+# ============================================================================
+
+
+@app.get("/set-mode/{mode_id}")
+@app.post("/set-mode/{mode_id}")
+async def set_mode_endpoint(
+    mode_id: str,
+    redirect_to: str = "/",
+) -> RedirectResponse:
+    target_mode = mode_id.strip().upper()
+    tier = resolve_prototype_mode(target_mode)
+    set_global_prototype_mode(tier.mode)
+    sep = "&" if "?" in redirect_to else "?"
+    msg = f"Switched+to+{tier.name}:+{tier.label}".replace(" ", "+")
+    return RedirectResponse(url=f"{redirect_to}{sep}message={msg}", status_code=303)
+
+
+if __name__ == "__main__":
+    import argparse
+
+    import uvicorn
+
+    parser = argparse.ArgumentParser(description="Inner Circle Prototype Server")
+    parser.add_argument(
+        "-m",
+        "--mode",
+        choices=["A", "B", "C", "a", "b", "c"],
+        default=resolve_prototype_mode().mode,
+        help="Prototype mode: A (Contacts & Grouping), B (+ Tasks), C (+ Graph)",
+    )
+    parser.add_argument("--host", default="0.0.0.0", help="Host IP")
+    parser.add_argument("--port", type=int, default=8000, help="Port")
+    parser.add_argument("--reload", action="store_true", help="Enable reload")
+    args = parser.parse_args()
+
+    set_global_prototype_mode(args.mode)
+    uvicorn.run("app.main:app", host=args.host, port=args.port, reload=args.reload)

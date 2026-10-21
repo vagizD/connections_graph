@@ -42,6 +42,7 @@
           <span class="nav-tab-badge" id="nav-contacts-badge">{{ total_contact_count }}</span>
           {% endif %}
         </a>
+        {% if has_tasks %}
         <a href="/?tab=tasks" class="nav-tab {% if active_tab == 'tasks' %}active{% endif %}" id="nav-tab-tasks">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M9 11l3 3L22 4"></path>
@@ -52,9 +53,22 @@
           <span class="nav-tab-badge" id="nav-tasks-badge">{{ pending_tasks_count }}</span>
           {% endif %}
         </a>
+        {% endif %}
       </nav>
 
       <div class="nav-actions">
+        <!-- Prototype Tier Indicator & Live Switcher -->
+        <div class="prototype-tier-indicator" id="prototype-tier-indicator" title="{{ prototype_tier.description if prototype_tier else '' }}">
+          <span class="prototype-tier-badge prototype-tier-badge-{{ (prototype_mode or 'C') | lower }}" id="active-tier-badge">
+            {{ prototype_tier.name if prototype_tier else 'Prototype C' }}
+          </span>
+          <div class="prototype-tier-quickswitch" role="group" aria-label="Prototype Tier Switcher">
+            <a href="/set-mode/A" class="tier-pill {% if prototype_mode == 'A' %}active{% endif %}" id="switch-tier-a" title="Prototype A: Contacts operations (list view) + Smart Grouping">A</a>
+            <a href="/set-mode/B" class="tier-pill {% if prototype_mode == 'B' %}active{% endif %}" id="switch-tier-b" title="Prototype B: Prototype A + Task List">B</a>
+            <a href="/set-mode/C" class="tier-pill {% if prototype_mode == 'C' or not prototype_mode %}active{% endif %}" id="switch-tier-c" title="Prototype C: Prototype B + Network Graph (Full)">C</a>
+          </div>
+        </div>
+
         {% if focal_person %}
         <div class="focal-badge" id="focal-person-badge" title="Focal contact representing network origin">
           <span class="focal-dot"></span>

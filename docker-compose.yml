@@ -1,0 +1,20 @@
+services:
+  inner-circle:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: inner-circle-prototype
+    ports:
+      - "8000:8000"
+    environment:
+      # Prototype mode tier: A (Contacts & Grouping), B (+ Tasks), C (+ Network Graph, default)
+      - PROTOTYPE_MODE=${PROTOTYPE_MODE:-C}
+      - HOST=0.0.0.0
+      - PORT=8000
+    volumes:
+      # Persist SQLite databases and uploads across container restarts
+      - prototype-storage:/app/data
+    restart: unless-stopped
+
+volumes:
+  prototype-storage:

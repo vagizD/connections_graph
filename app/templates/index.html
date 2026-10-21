@@ -330,7 +330,7 @@
 {% endif %}
 
 
-{% elif active_tab == 'tasks' %}
+{% elif active_tab == 'tasks' and has_tasks %}
 <!-- ========================================== -->
 <!-- DEDICATED TAB: TASKS & ACTION ITEMS        -->
 <!-- ========================================== -->
@@ -492,6 +492,7 @@
   </div>
 
   <!-- View Switcher (List vs Graph) -->
+  {% if has_graph %}
   <div class="view-switch-control" role="group" aria-label="View Mode Switcher">
     <button type="button" class="view-switch-btn {% if view_mode != 'graph' %}active{% endif %}" id="btn-view-list" onclick="setViewMode('list')" title="Standard List View">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -519,6 +520,7 @@
       Graph View
     </button>
   </div>
+  {% endif %}
 
   <div class="contacts-toolbar-actions">
     <!-- Smart Grouping Trigger Button -->
@@ -944,12 +946,14 @@
           <span class="split-metric-val">{{ grp.stats.active_touchpoint_rate }}%</span>
         </div>
 
+        {% if has_tasks %}
         <div class="split-metric-item">
           <span class="split-metric-label">Open Follow-ups</span>
           <span class="split-metric-val {% if grp.stats.pending_tasks_count > 0 %}has-tasks{% endif %}">
             {{ grp.stats.pending_tasks_count }} {% if grp.stats.pending_tasks_count == 1 %}task{% else %}tasks{% endif %}
           </span>
         </div>
+        {% endif %}
 
         {% if grp.stats.companies_represented %}
         <div class="split-metric-item split-metric-wide">
@@ -1256,6 +1260,7 @@
 {% endif %}
 </div>
 
+{% if has_graph %}
 <!-- ========================================== -->
 <!-- VIEW MODE 2: INTERACTIVE NETWORK GRAPH     -->
 <!-- ========================================== -->
@@ -1323,6 +1328,7 @@
     </aside>
   </div>
 </div>
+{% endif %}
 
 
 {% if disconnected_persons %}
@@ -1467,10 +1473,13 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Check initial view mode from URL or localStorage
-  var urlParams = new URLSearchParams(window.location.search);
-  var initialView = urlParams.get('view') || localStorage.getItem('inner_circle_view_mode') || 'list';
-  if (initialView === 'graph') {
-    setViewMode('graph');
+  var hasGraphEnabled = {% if has_graph %}true{% else %}false{% endif %};
+  if (hasGraphEnabled) {
+    var urlParams = new URLSearchParams(window.location.search);
+    var initialView = urlParams.get('view') || localStorage.getItem('inner_circle_view_mode') || 'list';
+    if (initialView === 'graph') {
+      setViewMode('graph');
+    }
   }
 });
 

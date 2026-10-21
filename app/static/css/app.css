@@ -1838,7 +1838,75 @@ a {
   color: #fff;
 }
 
+/* ==========================================================================
+   PROTOTYPE TIER INDICATOR & SWITCHER
+   ========================================================================== */
+.prototype-tier-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem 0.5rem;
+}
 
+.prototype-tier-badge {
+  font-size: 0.725rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
 
+.prototype-tier-badge-a {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
 
+.prototype-tier-badge-b {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
 
+.prototype-tier-badge-c {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.prototype-tier-quickswitch {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  border-left: 1px solid var(--border-subtle);
+  padding-left: 0.4rem;
+}
+
+.tier-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 3px;
+  color: var(--text-muted);
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.05);
+  transition: var(--transition);
+}
+
+.tier-pill:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.tier-pill.active {
+  background: var(--primary, #6366f1);
+  color: #fff;
+}
