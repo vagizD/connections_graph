@@ -25,9 +25,9 @@
   </div>
 </div>
 
-<form action="/contacts/{{ person.id }}/edit" method="post" id="contact-edit-form">
-  <div class="detail-layout">
-    <div class="main-column">
+<div class="detail-layout">
+  <div class="main-column">
+    <form action="/contacts/{{ person.id }}/edit" method="post" id="contact-edit-form">
       <!-- Section 1: Person Facts -->
       <section class="card" id="section-person-facts">
         <h3 class="card-title">
@@ -56,9 +56,29 @@
           </div>
         </div>
 
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="location">Location</label>
+            <input type="text" name="location" id="location" class="form-control" placeholder="e.g. London, UK or Durham, NC" value="{{ person.location or '' }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="education">Education / Alma Mater</label>
+            <input type="text" name="education" id="education" class="form-control" placeholder="e.g. Duke University, Stanford" value="{{ person.education or '' }}">
+          </div>
+        </div>
+
         <div class="form-group">
-          <label class="form-label" for="location">Location (Manually Editable)</label>
-          <input type="text" name="location" id="location" class="form-control" placeholder="e.g. London, UK or Washington, DC" value="{{ person.location or '' }}">
+          <label class="form-label" for="interests">Interests & Topics (comma-separated)</label>
+          <input type="text" name="interests" id="interests" class="form-control" placeholder="e.g. Robotics, AI, Venture Capital" value="{{ person.interests or '' }}">
+          {% if person.interest_list %}
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-top:0.5rem;">
+            {% for it in person.interest_list %}
+            <span class="meta-badge">
+              # {{ it }}
+            </span>
+            {% endfor %}
+          </div>
+          {% endif %}
         </div>
 
         <div class="form-row">
@@ -73,84 +93,370 @@
         </div>
       </section>
 
-      <!-- Section 2: Relationship Context -->
-      <section class="card" id="section-relationship-context">
+      <!-- Section 2: Relationship -->
+      <section class="card" id="section-relationship-context" style="margin-top: 1.5rem;">
         <h3 class="card-title">
-          <span>Your Relationship</span>
+          <span>Relationship</span>
           {% if relationship %}
           <span class="badge-action badge-create">Connected</span>
           {% else %}
           <span class="badge-action badge-unchanged">Disconnected</span>
           {% endif %}
         </h3>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">
+          How {{ person.first_name }} is connected to the network and current status.
+        </p>
 
-        <div class="form-group">
-          <label class="form-label" for="connected_on">Connected On Date</label>
-          <input 
-            type="date" 
-            name="connected_on" 
-            id="connected_on" 
-            class="form-control" 
-            value="{{ relationship.connected_on.isoformat() if relationship and relationship.connected_on else '' }}"
-          >
+        <!-- Summary -->
+        <div class="form-group" id="edge-summary-group">
+          <label class="form-label" style="margin-bottom:0.4rem;">Summary</label>
+          <div class="summary-box" id="display-edge-summary">
+            {% if relationship and relationship.summary %}
+            {{ relationship.summary }}
+            {% else %}
+            <span style="color:var(--text-dim);">No summary yet. Add an interaction below to generate.</span>
+            {% endif %}
+          </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="notes">Relationship Context & Conversation Notes</label>
-          <textarea 
-            name="notes" 
-            id="notes" 
-            rows="4" 
-            class="form-control" 
-            placeholder="Record where you met, shared interests, follow-up topics, or commitments..."
-          >{{ relationship.notes if relationship and relationship.notes else '' }}</textarea>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="context_labels">Tags (comma-separated)</label>
+            <input 
+              type="text" 
+              name="context_labels" 
+              id="context_labels" 
+              class="form-control" 
+              placeholder="e.g. Classmate, Coworker, Advisor, Investor"
+              value="{{ relationship.context_labels if relationship and relationship.context_labels else '' }}"
+            >
+            {% if relationship and relationship.context_label_list %}
+            <div style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-top:0.5rem;">
+              {% for lbl in relationship.context_label_list %}
+              <span class="meta-badge">
+                &bull; {{ lbl }}
+              </span>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="shared_activities">Shared Activities</label>
+            <input 
+              type="text" 
+              name="shared_activities" 
+              id="shared_activities" 
+              class="form-control" 
+              placeholder="e.g. Duke Angels Pitch Night, Capstone 2024"
+              value="{{ relationship.shared_activities if relationship and relationship.shared_activities else '' }}"
+            >
+          </div>
         </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="connected_on">Connected On</label>
+            <input 
+              type="date" 
+              name="connected_on" 
+              id="connected_on" 
+              class="form-control" 
+              value="{{ relationship.connected_on.isoformat() if relationship and relationship.connected_on else '' }}"
+            >
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="last_interaction_date">Last Contact Date</label>
+            <input 
+              type="date" 
+              name="last_interaction_date" 
+              id="last_interaction_date" 
+              class="form-control" 
+              value="{{ relationship.last_interaction_date.isoformat() if relationship and relationship.last_interaction_date else '' }}"
+            >
+            <span style="font-size:0.75rem; color:var(--text-dim);">Updates automatically when an interaction is added below.</span>
+          </div>
+        </div>
+
+        {% if relationship and relationship.notes %}
+        <div class="form-group" style="margin-top:0.75rem;">
+          <label class="form-label" style="font-size:0.8rem; color:var(--text-dim);">Initial Connection Note</label>
+          <div style="font-size:0.85rem; color:var(--text-muted); background:var(--bg-card); padding:0.5rem 0.75rem; border:1px solid var(--border-subtle); border-radius:var(--radius-sm); line-height:1.4;">{{ relationship.notes }}</div>
+          <input type="hidden" name="notes" value="{{ relationship.notes }}">
+        </div>
+        {% else %}
+        <input type="hidden" name="notes" value="{{ relationship.notes if relationship and relationship.notes else '' }}">
+        {% endif %}
 
         <button type="submit" class="btn btn-primary" id="btn-save-contact">
           Save Changes
         </button>
       </section>
-    </div>
+    </form>
 
-    <!-- Sidebar / Metadata & Danger Zone -->
-    <div class="side-column">
-      <div class="card">
-        <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem; color: var(--text-muted);">Record Metadata</h4>
-        <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.4rem;">
-          Person ID: <code>{{ person.id[:8] }}...</code>
-        </p>
-        <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.4rem;">
-          Created: {{ person.created_at[:10] }}
-        </p>
-        <p style="font-size: 0.8rem; color: var(--text-dim);">
-          Last Updated: {{ person.updated_at[:10] }}
-        </p>
-      </div>
+    <!-- Hidden form for summary re-synthesis -->
+    <form id="form-resynthesize-summary" action="/contacts/{{ person.id }}/summary/resynthesize" method="post" style="display:none;"></form>
 
-      <div class="card" style="border-color: rgba(244, 63, 94, 0.2);">
-        <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: #fca5a5;">Danger Zone</h4>
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
-          Deleting this person permanently removes their record and all {{ incident_edge_count }} connection edge(s).
-        </p>
-        <button 
-          type="button" 
-          class="btn btn-danger btn-sm" 
-          id="btn-open-delete-modal"
-          onclick="document.getElementById('delete-modal').style.display='flex'"
-        >
-          Delete Person
+    <!-- Section 2.5: Tasks & Follow-ups -->
+    {% if relationship %}
+    <section class="card" id="section-contact-tasks" style="margin-top: 1.5rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+        <div>
+          <h3 class="card-title" style="margin:0;">
+            <span>Tasks ({{ tasks | length }})</span>
+          </h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin:0.2rem 0 0 0;">
+            Action items and deadlines with {{ person.display_name }}.
+          </p>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="toggleContactTaskCard()" id="btn-toggle-contact-task">
+          + Add Task
         </button>
       </div>
+
+      <!-- Quick Add Contact Task Form (collapsed) -->
+      <div id="add-contact-task-card" style="display:none; background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:1rem; margin-bottom:1rem;">
+        <form action="/tasks/new" method="post">
+          <input type="hidden" name="redirect_to" value="/contacts/{{ person.id }}">
+          <input type="hidden" name="contact_person_id" value="{{ person.id }}">
+          <div class="form-row">
+            <div class="form-group" style="flex:2;">
+              <label class="form-label" for="c_task_title">Task Description</label>
+              <input type="text" name="title" id="c_task_title" class="form-control" placeholder="e.g. Send revised term sheet draft" required>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label" for="c_task_deadline">Deadline</label>
+              <input type="date" name="deadline" id="c_task_deadline" class="form-control">
+              <span style="font-size:0.75rem; color:var(--text-dim);">Defaults to 1 week if empty</span>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="toggleContactTaskCard()">Cancel</button>
+            <button type="submit" class="btn btn-primary btn-sm">Add Task</button>
+          </div>
+        </form>
+      </div>
+
+      {% if tasks %}
+      <div class="tasks-container" id="contact-tasks-list">
+        {% for task in tasks %}
+        <div class="task-item {% if task.is_completed %}task-completed{% endif %}" id="contact-task-row-{{ task.id }}">
+          <div class="task-left">
+            <form action="/tasks/{{ task.id }}/toggle" method="post" style="display:inline; margin:0;">
+              <input type="hidden" name="redirect_to" value="/contacts/{{ person.id }}">
+              <button type="submit" class="task-check-btn {% if task.is_completed %}checked{% endif %}" title="{% if task.is_completed %}Mark pending{% else %}Mark completed{% endif %}">
+                {% if task.is_completed %}✓{% endif %}
+              </button>
+            </form>
+            <div class="task-content">
+              <span class="task-title">{{ task.title }}</span>
+            </div>
+          </div>
+          <div class="task-right">
+            {% if task.is_completed %}
+            <span class="task-deadline-badge task-deadline-completed">✓ Completed</span>
+            {% elif task.is_overdue %}
+            <span class="task-deadline-badge task-deadline-overdue">⚠️ Due {{ task.deadline.strftime('%b %d') }}</span>
+            {% elif task.is_due_today %}
+            <span class="task-deadline-badge task-deadline-today">⭐ Today</span>
+            {% else %}
+            <span class="task-deadline-badge task-deadline-upcoming">📅 Due {{ task.deadline.strftime('%b %d, %Y') }}</span>
+            {% endif %}
+
+            <form action="/tasks/{{ task.id }}/delete" method="post" style="display:inline; margin:0;">
+              <input type="hidden" name="redirect_to" value="/contacts/{{ person.id }}">
+              <button type="submit" class="btn btn-outline btn-sm" style="padding:0.15rem 0.4rem; font-size:0.75rem;" title="Delete task">&times;</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p style="font-size:0.85rem; color:var(--text-dim); text-align:center; padding:0.75rem 0; margin:0;">
+        No active tasks for {{ person.display_name }}. Action items from interactions will appear here automatically.
+      </p>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <!-- Section 3: Interactions -->
+    {% if relationship %}
+    <section class="card" id="section-interaction-sequence" style="margin-top: 1.5rem;">
+      <h3 class="card-title">
+        <span>Interactions ({{ interactions | length }})</span>
+        <span class="badge-action badge-update">Timeline</span>
+      </h3>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.25rem;">
+        History of conversations, meetings, thoughts, and calls.
+      </p>
+
+      <!-- Add Interaction Form -->
+      <div id="panel-add-interaction" style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:1.25rem; margin-bottom:1.5rem;">
+        <h4 style="font-size:0.95rem; margin:0 0 1rem 0; color:var(--text-main);">Add Interaction</h4>
+
+        <form action="/contacts/{{ person.id }}/interactions" method="post" enctype="multipart/form-data" id="form-log-interaction">
+          <input type="file" name="audio_file" id="recorded-file-input" style="display:none;" accept="audio/*,.webm,.mp3,.wav,.m4a,.ogg">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="interaction_type">Type</label>
+              <select name="interaction_type" id="interaction_type" class="form-control">
+                <option value="thought" selected>Strategic Thought (How they can be helpful)</option>
+                <option value="chat">Quick Chat / Catchup</option>
+                <option value="call">Phone / Video Call</option>
+                <option value="meeting">In-Person Meeting</option>
+                <option value="mutual_connection">Mutual Connection (Spoke with someone who knows them)</option>
+                <option value="audio_transcript">Voice Note</option>
+                <option value="email">Email</option>
+                <option value="note">Note</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="manual_interaction_date">Date</label>
+              <input type="date" name="interaction_date" id="manual_interaction_date" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="interaction_title">Topic (optional)</label>
+            <input type="text" name="title" id="interaction_title" class="form-control" placeholder="e.g. Advisory role, coffee catchup, intro notes">
+          </div>
+
+          <div class="form-group" style="margin-bottom:0.75rem;">
+            <label class="form-label" for="interaction_content">Notes</label>
+            <textarea name="content" id="interaction_content" rows="3" class="form-control" placeholder="Key takeaways, thoughts on synergy, mutual connection notes, or action items..."></textarea>
+          </div>
+
+          <!-- Voice action & Submit button directly under the interaction space -->
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+            <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+              <button 
+                type="button" 
+                class="btn btn-outline btn-sm" 
+                id="btn-voice-record" 
+                onclick="toggleVoiceRecording()" 
+                style="display:inline-flex; align-items:center; gap:0.4rem; font-size:0.8rem;"
+              >
+                <span>🎙️</span>
+                <span id="voice-btn-label">Record Voice Note</span>
+              </button>
+
+              <div id="voice-recording-status" style="display:none; align-items:center; gap:0.5rem;">
+                <span class="recording-dot"></span>
+                <span style="font-weight:700; color:#f43f5e; font-size:0.85rem;" id="record-timer-display">00:00</span>
+                <span style="font-size:0.75rem; color:var(--text-muted);">&bull; Click again to finish</span>
+              </div>
+
+              <div id="voice-done-controls" style="display:none; align-items:center; gap:0.5rem;">
+                <audio id="recorded-audio-playback" controls style="height:28px; vertical-align:middle;"></audio>
+                <button type="button" class="btn btn-outline btn-sm" onclick="clearVoiceRecording()" style="padding:0.15rem 0.45rem; font-size:0.75rem;" title="Remove recording">
+                  &times; Remove
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-sm" id="btn-submit-interaction">
+              Add Interaction
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Timeline List -->
+      {% if interactions %}
+      <div class="interaction-timeline" id="interactions-list" style="display:flex; flex-direction:column; gap:0.75rem;">
+        {% for act in interactions %}
+        <div class="timeline-item" id="interaction-{{ act.id }}" style="padding:0.75rem 0.9rem; background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-sm);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+              <span class="meta-badge">
+                {% if act.interaction_type == 'thought' %}
+                Strategic Thought
+                {% elif act.interaction_type == 'chat' %}
+                Quick Chat
+                {% elif act.interaction_type in ('call', 'phone', 'video') %}
+                Phone Call
+                {% elif act.interaction_type == 'mutual_connection' %}
+                Mutual Connection
+                {% elif act.interaction_type == 'meeting' %}
+                Meeting
+                {% elif act.interaction_type == 'audio_transcript' %}
+                Audio Transcript
+                {% elif act.interaction_type == 'email' %}
+                Email
+                {% else %}
+                {{ act.interaction_type | replace('_', ' ') | title }}
+                {% endif %}
+              </span>
+              <strong style="font-size:0.875rem; color:var(--text-main);">{{ act.title or "Interaction" }}</strong>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.6rem;">
+              <span style="font-size:0.75rem; color:var(--text-dim);">
+                {{ act.interaction_date.strftime('%b %d, %Y') }}
+              </span>
+              <form action="/contacts/{{ person.id }}/interactions/{{ act.id }}/delete" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-outline btn-sm" style="padding:0.1rem 0.35rem; font-size:0.7rem;" title="Delete interaction">
+                  &times;
+                </button>
+              </form>
+            </div>
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5; white-space:pre-wrap; margin:0;">{{ act.content }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p style="font-size:0.85rem; color:var(--text-dim); text-align:center; padding:1rem 0;">
+        No interactions yet. Add a note, call, or thought above.
+      </p>
+      {% endif %}
+    </section>
+    {% endif %}
+  </div>
+
+  <!-- Sidebar / Metadata & Danger Zone -->
+  <div class="side-column">
+    <div class="card">
+      <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem; color: var(--text-muted);">Record Metadata</h4>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.4rem;">
+        Person ID: <code>{{ person.id[:8] }}...</code>
+      </p>
+      {% if relationship %}
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.4rem;">
+        Edge ID: <code>{{ relationship.id[:8] }}...</code>
+      </p>
+      {% endif %}
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.4rem;">
+        Created: {{ person.created_at[:10] }}
+      </p>
+      <p style="font-size: 0.8rem; color: var(--text-dim);">
+        Last Updated: {{ person.updated_at[:10] }}
+      </p>
+    </div>
+
+    <div class="card" style="border-color: rgba(244, 63, 94, 0.2);">
+      <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: #fca5a5;">Danger Zone</h4>
+      <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+        Deleting this contact permanently removes their record and connection.
+      </p>
+      <button 
+        type="button" 
+        class="btn btn-danger btn-sm" 
+        id="btn-open-delete-modal"
+        onclick="document.getElementById('delete-modal').style.display='flex'"
+      >
+        Delete Contact
+      </button>
     </div>
   </div>
-</form>
+</div>
 
 <!-- Delete Confirmation Modal -->
 <div id="delete-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:100; align-items:center; justify-content:center;">
   <div class="card" style="max-width: 480px; width: 90%; background: var(--bg-secondary); border-color: rgba(244, 63, 94, 0.4);">
-    <h3 style="color:#fca5a5; margin-bottom: 0.75rem;">Confirm Permanent Deletion</h3>
+    <h3 style="color:#fca5a5; margin-bottom: 0.75rem;">Confirm Deletion</h3>
     <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.25rem;">
-      Are you sure you want to delete <strong>{{ person.display_name }}</strong>? This will permanently erase their node and all <strong>{{ incident_edge_count }} incident connection edge(s)</strong>.
+      Confirm deletion of <strong>{{ person.display_name }}</strong>. This action cannot be undone.
     </p>
     <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
       <button type="button" class="btn btn-secondary" onclick="document.getElementById('delete-modal').style.display='none'">
@@ -158,10 +464,135 @@
       </button>
       <form action="/contacts/{{ person.id }}/delete" method="post">
         <button type="submit" class="btn btn-danger" id="btn-confirm-delete">
-          Yes, Delete Person
+          Yes, Delete Contact
         </button>
       </form>
     </div>
   </div>
 </div>
+
+<script>
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let recordTimerInterval = null;
+  let recordSeconds = 0;
+  let isRecording = false;
+
+  async function toggleVoiceRecording() {
+    if (isRecording) {
+      stopVoiceRecording();
+    } else {
+      await startVoiceRecording();
+    }
+  }
+
+  async function startVoiceRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunks = [];
+      mediaRecorder = new MediaRecorder(stream);
+
+      mediaRecorder.ondataavailable = function(e) {
+        if (e.data.size > 0) {
+          audioChunks.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = function() {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const player = document.getElementById('recorded-audio-playback');
+        if (player) {
+          player.src = audioUrl;
+        }
+
+        try {
+          const file = new File([audioBlob], "voice_note_" + Date.now() + ".webm", { type: 'audio/webm' });
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          const fileInput = document.getElementById('recorded-file-input');
+          if (fileInput) {
+            fileInput.files = dataTransfer.files;
+          }
+        } catch (err) {
+          console.warn('DataTransfer unavailable:', err);
+        }
+
+        stream.getTracks().forEach(function(track) { track.stop(); });
+
+        document.getElementById('voice-recording-status').style.display = 'none';
+        document.getElementById('voice-done-controls').style.display = 'flex';
+        document.getElementById('btn-voice-record').style.display = 'none';
+
+        const typeSelect = document.getElementById('interaction_type');
+        if (typeSelect && typeSelect.value === 'note') {
+          typeSelect.value = 'audio_transcript';
+        }
+      };
+
+      mediaRecorder.start();
+      isRecording = true;
+      recordSeconds = 0;
+      document.getElementById('record-timer-display').textContent = '00:00';
+      document.getElementById('voice-recording-status').style.display = 'inline-flex';
+      document.getElementById('voice-done-controls').style.display = 'none';
+      document.getElementById('voice-btn-label').textContent = 'Stop Recording';
+
+      recordTimerInterval = setInterval(function() {
+        recordSeconds++;
+        const mins = String(Math.floor(recordSeconds / 60)).padStart(2, '0');
+        const secs = String(recordSeconds % 60).padStart(2, '0');
+        document.getElementById('record-timer-display').textContent = mins + ':' + secs;
+      }, 1000);
+
+    } catch (err) {
+      alert('Microphone access is unavailable: ' + err.message);
+    }
+  }
+
+  function stopVoiceRecording() {
+    if (recordTimerInterval) {
+      clearInterval(recordTimerInterval);
+      recordTimerInterval = null;
+    }
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
+    isRecording = false;
+    document.getElementById('voice-btn-label').textContent = 'Record Voice Note';
+  }
+
+  function clearVoiceRecording() {
+    audioChunks = [];
+    const fileInput = document.getElementById('recorded-file-input');
+    if (fileInput) fileInput.value = '';
+    const player = document.getElementById('recorded-audio-playback');
+    if (player) player.src = '';
+    document.getElementById('voice-done-controls').style.display = 'none';
+    document.getElementById('voice-recording-status').style.display = 'none';
+    const btn = document.getElementById('btn-voice-record');
+    if (btn) btn.style.display = 'inline-flex';
+    document.getElementById('voice-btn-label').textContent = 'Record Voice Note';
+  }
+
+  function toggleContactTaskCard() {
+    const c = document.getElementById('add-contact-task-card');
+    if (!c) return;
+    const isHidden = c.style.display === 'none' || c.style.display === '';
+    c.style.display = isHidden ? 'block' : 'none';
+    if (isHidden) {
+      const input = document.getElementById('c_task_title');
+      if (input) input.focus();
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('manual_interaction_date');
+    if (dateInput && !dateInput.value) {
+      dateInput.value = today;
+    }
+  });
+</script>
 {% endblock %}
+

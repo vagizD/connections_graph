@@ -6,6 +6,7 @@ import csv
 import io
 import random
 from datetime import date, timedelta
+from pathlib import Path
 from typing import TextIO
 
 FIRST_NAMES: list[str] = [
@@ -179,3 +180,21 @@ def generate_fictional_contacts_csv(
     if buffer is not None:
         return buffer.getvalue()
     return ""
+
+
+def generate_duke_classmates_5_csv() -> str:
+    """Return the CSV text for the 5-classmates focused test case."""
+    path = Path(__file__).resolve().parent.parent / "data" / "fixtures" / "duke_classmates_5.csv"
+    if path.exists():
+        return path.read_text(encoding="utf-8")
+    raise FileNotFoundError(f"Fixture not found at {path}")
+
+
+def generate_duke_international_100_csv() -> str:
+    """Return the CSV text for the 100-connection Duke international student test case."""
+    path = (
+        Path(__file__).resolve().parent.parent / "data" / "fixtures" / "duke_international_100.csv"
+    )
+    if path.exists():
+        return path.read_text(encoding="utf-8")
+    raise FileNotFoundError(f"Fixture not found at {path}")

@@ -13,7 +13,7 @@
 <div class="card" style="max-width: 680px; margin: 0 auto;">
   <h3 class="card-title">Upload Connections.csv</h3>
   <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">
-    Upload your standard LinkedIn data export file. Inner Circle safely previews all records, checks for existing contacts by URL or email (or deterministic fingerprint), and ensures your existing manual edits are never erased.
+    Upload standard LinkedIn data export file. Inner Circle safely previews all records, checks for existing contacts by URL or email (or deterministic fingerprint), and ensures existing manual edits are never erased.
   </p>
 
   <form action="/import/preview" method="post" enctype="multipart/form-data" id="import-upload-form">
@@ -35,17 +35,89 @@
   <hr style="border: 0; border-top: 1px solid var(--border-subtle); margin: 2rem 0 1.5rem 0;">
 
   <div>
-    <h4 style="font-size: 0.85rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.5rem;">
-      Quick Test with Demo Fixtures
+    <h4 style="font-size: 0.85rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 0.05em;">
+      Conceptual Test Cases
     </h4>
-    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-      Want to test without uploading your own file? You can run a test preview using the built-in fictional fixture.
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+      Instantly load predefined test networks designed for specific testing scenarios:
     </p>
-    <form action="/import/demo" method="post" style="display:inline;">
-      <button type="submit" class="btn btn-secondary btn-sm" id="btn-import-demo-fixture">
-        Preview Built-in Fictional 10 Contacts
-      </button>
-    </form>
+
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+      <!-- Case 1: 100 Connections -->
+      <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 260px;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+              <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border-color: rgba(99, 102, 241, 0.4);">
+                Case 1 &bull; Whole Graph (100 Contacts)
+              </span>
+            </div>
+            <p style="font-size: 0.825rem; color: var(--text-muted); margin: 0; line-height: 1.45;">
+              Duke international student network in ~2 years. Spans 50+ companies, 14 global tech hubs & countries (US: Durham, NYC, SF, Boston, Seattle; UK: London; UAE: Dubai, Abu Dhabi; Kazakhstan: Astana, Almaty; Singapore; Germany: Berlin), 10 universities, 50+ context tags, and interaction recency. Ideal for testing <strong>clustering, categorization, graph visualization, search, and multi-filter queries</strong>.
+            </p>
+          </div>
+          <form action="/import/test-100" method="post" style="display:inline; flex-shrink: 0;">
+            <button type="submit" class="btn btn-primary btn-sm" id="btn-import-case-100">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+              Load 100 Connections
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Case 2: 5 Classmates -->
+      <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 260px;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+              <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">
+                Case 2 &bull; Small Tasks (5 Classmates)
+              </span>
+            </div>
+            <p style="font-size: 0.825rem; color: var(--text-muted); margin: 0; line-height: 1.45;">
+              Focused Duke classmates cohort (Sophia Ramirez, Liam Walker, Tariq Mansoor, Elena Rostova, Kenji Sato) with Duke Pratt Lab and HackDuke projects. Ideal for <strong>isolated node testing, edge inspection, single contact edits, and interaction logs</strong>.
+            </p>
+          </div>
+          <form action="/import/test-5" method="post" style="display:inline; flex-shrink: 0;">
+            <button type="submit" class="btn btn-secondary btn-sm" id="btn-import-case-5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              Load 5 Classmates
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Additional options: 10 contacts fixture & Reset -->
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; padding-top: 0.5rem;">
+        <div style="display: flex; gap: 0.5rem;">
+          <form action="/import/test-table" method="post" style="display:inline;">
+            <button type="submit" class="btn btn-outline btn-sm" id="btn-instant-import-test-fixture">
+              Load 10 Contacts Fixture
+            </button>
+          </form>
+          <form action="/import/demo" method="post" style="display:inline;">
+            <button type="submit" class="btn btn-outline btn-sm" id="btn-import-demo-fixture">
+              Preview Fixture First
+            </button>
+          </form>
+        </div>
+
+        <form action="/network/reset" method="post" style="display:inline;" onsubmit="return confirm('Wipe all contacts and edges to return to a clean blank state?');">
+          <button type="submit" class="btn btn-outline btn-sm" id="btn-import-page-reset" style="color: var(--accent-rose); border-color: rgba(244, 63, 94, 0.3);">
+            Reset Test Network
+          </button>
+        </form>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

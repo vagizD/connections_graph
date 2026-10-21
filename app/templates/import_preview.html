@@ -54,7 +54,7 @@
 {% if preview.conflicts or preview.error_count > 0 %}
 <div class="alert-banner alert-error" style="margin-bottom: 1.5rem;">
   <div>
-    <strong>Import Blocked:</strong> Conflicting populated values or errors were detected. Under the safety policy, unresolved conflicts block the import transaction to protect your database.
+    <strong>Import Blocked:</strong> Conflicting populated values or errors were detected. Under the safety policy, unresolved conflicts block the import transaction to protect the database.
   </div>
 </div>
 {% endif %}
@@ -98,7 +98,7 @@
         </td>
         <td>
           {% if item.action == 'CREATE' %}
-          <span style="color: var(--text-muted); font-size: 0.8rem;">New person node & edge to you</span>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">New person node & edge to center</span>
           {% elif item.action == 'UPDATE' %}
           <span style="color: var(--accent-blue); font-size: 0.8rem;">
             Matched by {{ item.matched_by }}. Filling: {{ item.filled_fields.keys() | join(', ') }}

@@ -6,7 +6,7 @@
     <a href="/" class="btn btn-outline btn-sm" id="btn-back-to-contacts" style="margin-bottom: 0.5rem;">
       &larr; Back to Network
     </a>
-    <h2 class="page-title">Add Person to Your Network</h2>
+    <h2 class="page-title">Add Person to Network</h2>
   </div>
 </div>
 
@@ -17,7 +17,7 @@
     <span class="badge-action badge-update">{{ disconnected_persons | length }} available</span>
   </h3>
   <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-    These individuals are already stored in your database but currently disconnected from your focal node. Reconnecting preserves all their facts without creating duplicate records.
+    These individuals are already stored in the database but currently disconnected from the focal node. Reconnecting preserves all their facts without creating duplicate records.
   </p>
   <form action="/contacts/reconnect-existing" method="post" style="display:flex; gap:0.75rem; align-items:flex-end;">
     <div style="flex:1;">
@@ -38,7 +38,7 @@
 
 <form action="/contacts/new" method="post" id="contact-create-form">
   <div class="card">
-    <h3 class="card-title">Create New Person</h3>
+    <h3 class="card-title">Node Facts (About the Person)</h3>
 
     <div class="form-row">
       <div class="form-group">
@@ -62,9 +62,20 @@
       </div>
     </div>
 
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="location">Location</label>
+        <input type="text" name="location" id="location" class="form-control" placeholder="e.g. Durham, NC or London, UK">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="education">Education / Alma Mater</label>
+        <input type="text" name="education" id="education" class="form-control" placeholder="e.g. Duke University, MIT">
+      </div>
+    </div>
+
     <div class="form-group">
-      <label class="form-label" for="location">Location</label>
-      <input type="text" name="location" id="location" class="form-control" placeholder="e.g. Durham, NC or Washington, DC">
+      <label class="form-label" for="interests">Interests & Topics (comma-separated)</label>
+      <input type="text" name="interests" id="interests" class="form-control" placeholder="e.g. Robotics, AI, Renewable Energy, Venture Capital">
     </div>
 
     <div class="form-row">
@@ -80,22 +91,42 @@
 
     <hr style="border: 0; border-top: 1px solid var(--border-subtle); margin: 1.5rem 0;">
 
-    <h4 style="font-size: 1rem; margin-bottom: 1rem; color: var(--accent-teal);">Relationship with You</h4>
+    <h4 style="font-size: 1rem; margin-bottom: 0.5rem; color: var(--accent-teal);">Relationship</h4>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+      How this person is connected to the network.
+    </p>
 
-    <div class="form-group">
-      <label class="form-label" for="connected_on">Connected On Date</label>
-      <input type="date" name="connected_on" id="connected_on" class="form-control">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="context_labels">Tags (comma-separated)</label>
+        <input type="text" name="context_labels" id="context_labels" class="form-control" placeholder="e.g. Classmate, Coworker, Advisor, Investor">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="shared_activities">Shared Activities</label>
+        <input type="text" name="shared_activities" id="shared_activities" class="form-control" placeholder="e.g. Robotics Lab Project, Duke Angels">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="connected_on">Connected On</label>
+        <input type="date" name="connected_on" id="connected_on" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="last_interaction_date">Last Contact Date</label>
+        <input type="date" name="last_interaction_date" id="last_interaction_date" class="form-control">
+      </div>
     </div>
 
     <div class="form-group">
-      <label class="form-label" for="notes">Relationship Context & Notes</label>
-      <textarea name="notes" id="notes" rows="3" class="form-control" placeholder="Where did you meet? What did you discuss? Any promises or follow-up topics?"></textarea>
+      <label class="form-label" for="notes">Notes</label>
+      <textarea name="notes" id="notes" rows="3" class="form-control" placeholder="Meeting details, discussion summary, or follow-up topics."></textarea>
     </div>
 
     <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top: 1.5rem;">
       <a href="/" class="btn btn-secondary">Cancel</a>
       <button type="submit" class="btn btn-primary" id="btn-create-person-submit">
-        Add & Connect to Network
+        Add Contact
       </button>
     </div>
   </div>

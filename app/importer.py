@@ -357,8 +357,13 @@ def commit_import(
                 profile_url=_normalize_profile_url(row.profile_url),
                 company=row.company,
                 job_title=row.job_title,
-                location=None,
+                location=row.location,
+                education=row.education,
+                interests=row.interests,
                 connected_on=row.connected_on,
+                context_labels=row.context_labels,
+                last_interaction_date=row.last_interaction_date,
+                summary=row.summary,
                 notes=None,
             )
             # Store fingerprint if row lacks profile_url and email
@@ -413,7 +418,9 @@ def commit_import(
                 profile_url=new_url,
                 company=new_company,
                 job_title=new_title,
-                location=current_p.location,
+                location=row.location or current_p.location,
+                education=row.education or current_p.education,
+                interests=row.interests or current_p.interests,
             )
 
             # Check / update edge to focal person
@@ -426,16 +433,22 @@ def commit_import(
                     person_2_id=current_p.id,
                     connected_on=row.connected_on,
                     notes=None,
+                    context_labels=row.context_labels,
+                    last_interaction_date=row.last_interaction_date,
+                    summary=row.summary,
                 )
-            elif "connected_on" in item.filled_fields:
-                new_date = item.filled_fields["connected_on"]
-                assert isinstance(new_date, date)
+            else:
+                new_date = item.filled_fields.get("connected_on", edge.connected_on)
+                assert new_date is None or isinstance(new_date, date)
                 update_relationship(
                     conn=conn,
                     owner_id=owner_id,
                     relationship_id=edge.id,
                     connected_on=new_date,
                     notes=edge.notes,
+                    context_labels=row.context_labels or edge.context_labels,
+                    last_interaction_date=row.last_interaction_date or edge.last_interaction_date,
+                    summary=row.summary or edge.summary,
                 )
 
             updated_count += 1

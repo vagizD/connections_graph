@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Inner Circle — Professional Relationship Manager{% endblock %}</title>
-  <meta name="description" content="Inner Circle helps you organize, explore, maintain, and expand your professional connections.">
+  <meta name="description" content="Inner Circle helps organize, explore, maintain, and expand professional connections.">
   <link rel="stylesheet" href="/static/css/app.css">
 </head>
 <body>
@@ -22,46 +22,68 @@
         </div>
       </div>
 
+      <nav class="nav-tabs" id="nav-tabs" aria-label="Main Navigation">
+        <a href="/?tab=profile" class="nav-tab {% if active_tab == 'profile' %}active{% endif %}" id="nav-tab-profile">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          Profile
+        </a>
+        <a href="/?tab=contacts" class="nav-tab {% if active_tab == 'contacts' %}active{% endif %}" id="nav-tab-contacts">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          Contacts
+          {% if total_contact_count is defined and total_contact_count is not none %}
+          <span class="nav-tab-badge" id="nav-contacts-badge">{{ total_contact_count }}</span>
+          {% endif %}
+        </a>
+        <a href="/?tab=tasks" class="nav-tab {% if active_tab == 'tasks' %}active{% endif %}" id="nav-tab-tasks">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
+          Tasks
+          {% if pending_tasks_count is defined and pending_tasks_count > 0 %}
+          <span class="nav-tab-badge" id="nav-tasks-badge">{{ pending_tasks_count }}</span>
+          {% endif %}
+        </a>
+      </nav>
+
       <div class="nav-actions">
         {% if focal_person %}
-        <div class="focal-badge" id="focal-person-badge" title="Focal Person representing your network origin">
+        <div class="focal-badge" id="focal-person-badge" title="Focal contact representing network origin">
           <span class="focal-dot"></span>
-          <span><strong>{{ focal_person.display_name }}</strong> (You)</span>
+          <span><strong>{{ focal_person.display_name }}</strong></span>
         </div>
         {% endif %}
-        <a href="/import" class="btn btn-secondary" id="nav-import-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
-          </svg>
-          Import CSV
-        </a>
-        <a href="/contacts/new" class="btn btn-primary" id="nav-add-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          Add Contact
-        </a>
       </div>
     </div>
   </header>
 
   <main class="container">
-    {% if message %}
-    <div class="alert-banner alert-success" id="alert-banner">
-      <span>{{ message }}</span>
-      <button type="button" class="btn btn-sm btn-outline" onclick="this.parentElement.remove()">Dismiss</button>
-    </div>
-    {% endif %}
-
-    {% if error %}
-    <div class="alert-banner alert-error" id="error-banner">
-      <span>{{ error }}</span>
-      <button type="button" class="btn btn-sm btn-outline" onclick="this.parentElement.remove()">Dismiss</button>
-    </div>
-    {% endif %}
-
     {% block content %}{% endblock %}
   </main>
+
+  {% if message or error %}
+  <aside class="toast-container" id="toast-container" aria-live="polite">
+    {% if message %}
+    <div class="toast-card toast-success" id="toast-message">
+      <span class="toast-text">{{ message }}</span>
+      <button type="button" class="toast-close" onclick="this.closest('.toast-card').remove()" aria-label="Close notification">&times;</button>
+    </div>
+    {% endif %}
+    {% if error %}
+    <div class="toast-card toast-error" id="toast-error">
+      <span class="toast-text">{{ error }}</span>
+      <button type="button" class="toast-close" onclick="this.closest('.toast-card').remove()" aria-label="Close notification">&times;</button>
+    </div>
+    {% endif %}
+  </aside>
+  {% endif %}
 </body>
 </html>

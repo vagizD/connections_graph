@@ -31,6 +31,12 @@ class ParsedContactRow:
     company: str | None
     job_title: str | None
     connected_on: date | None
+    location: str | None = None
+    education: str | None = None
+    interests: str | None = None
+    context_labels: str | None = None
+    summary: str | None = None
+    last_interaction_date: date | None = None
 
     @property
     def display_name(self) -> str:
@@ -122,7 +128,7 @@ def parse_connections_csv(stream_or_str: str | bytes | TextIO) -> ParseResult:
         stripped_row = [col.strip() for col in row]
         if all(req in stripped_row for req in REQUIRED_COLUMNS):
             header_row_number = current_line
-            column_indices = {col: stripped_row.index(col) for col in REQUIRED_COLUMNS}
+            column_indices = {col: stripped_row.index(col) for col in stripped_row}
             break
 
     if header_row_number is None:
@@ -157,6 +163,35 @@ def parse_connections_csv(stream_or_str: str | bytes | TextIO) -> ParseResult:
         raw_position = _extract_cell(raw_row, column_indices, "Position")
         raw_connected = _extract_cell(raw_row, column_indices, "Connected On")
 
+        raw_loc = (
+            _extract_cell(raw_row, column_indices, "Location")
+            if "Location" in column_indices
+            else ""
+        )
+        raw_edu = (
+            _extract_cell(raw_row, column_indices, "Education")
+            if "Education" in column_indices
+            else ""
+        )
+        raw_int = (
+            _extract_cell(raw_row, column_indices, "Interests")
+            if "Interests" in column_indices
+            else ""
+        )
+        raw_ctx = (
+            _extract_cell(raw_row, column_indices, "Context Labels")
+            if "Context Labels" in column_indices
+            else ""
+        )
+        raw_sum = (
+            _extract_cell(raw_row, column_indices, "Summary") if "Summary" in column_indices else ""
+        )
+        raw_last = (
+            _extract_cell(raw_row, column_indices, "Last Interaction Date")
+            if "Last Interaction Date" in column_indices
+            else ""
+        )
+
         if not first_name and not last_name:
             errors.append(
                 ParseError(
@@ -177,6 +212,13 @@ def parse_connections_csv(stream_or_str: str | bytes | TextIO) -> ParseResult:
                 errors.append(ParseError(row_number=current_line, message=str(ex)))
                 continue
 
+        parsed_last_date: date | None = None
+        if raw_last:
+            try:
+                parsed_last_date = _parse_date(raw_last)
+            except ValueError:
+                parsed_last_date = None
+
         parsed_rows.append(
             ParsedContactRow(
                 row_number=current_line,
@@ -187,6 +229,12 @@ def parse_connections_csv(stream_or_str: str | bytes | TextIO) -> ParseResult:
                 company=_normalize_optional(raw_company),
                 job_title=_normalize_optional(raw_position),
                 connected_on=parsed_date,
+                location=_normalize_optional(raw_loc),
+                education=_normalize_optional(raw_edu),
+                interests=_normalize_optional(raw_int),
+                context_labels=_normalize_optional(raw_ctx),
+                summary=_normalize_optional(raw_sum),
+                last_interaction_date=parsed_last_date,
             )
         )
 

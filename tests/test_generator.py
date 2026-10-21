@@ -4,7 +4,11 @@ from pathlib import Path
 
 from app.csv_parser import parse_connections_csv
 from app.database import get_db
-from app.generator import generate_fictional_contacts_csv
+from app.generator import (
+    generate_duke_classmates_5_csv,
+    generate_duke_international_100_csv,
+    generate_fictional_contacts_csv,
+)
 from app.services import ensure_dev_owner, list_contacts_connected_to_focal
 from seed_demo import seed_database
 
@@ -49,3 +53,44 @@ def test_seed_database_flow(tmp_path: Path) -> None:
     with get_db(demo_db) as conn:
         contacts2 = list_contacts_connected_to_focal(conn, owner.id, focal.id)
         assert len(contacts2) == 100
+
+
+def test_duke_classmates_5_fixture() -> None:
+    csv_text = generate_duke_classmates_5_csv()
+    parsed = parse_connections_csv(csv_text.encode("utf-8"))
+
+    assert len(parsed.errors) == 0
+    assert len(parsed.rows) == 5
+
+    names = {f"{r.first_name} {r.last_name}" for r in parsed.rows}
+    assert "Sophia Ramirez" in names
+    assert "Liam Walker" in names
+    assert "Tariq Mansoor" in names
+    assert "Elena Rostova" in names
+    assert "Kenji Sato" in names
+
+    # All should be affiliated with Duke
+    for r in parsed.rows:
+        assert "Duke" in (r.education or "") or "Duke" in (r.company or "")
+
+
+def test_duke_international_100_fixture() -> None:
+    csv_text = generate_duke_international_100_csv()
+    parsed = parse_connections_csv(csv_text.encode("utf-8"))
+
+    assert len(parsed.errors) == 0
+    assert len(parsed.rows) == 100
+
+    companies = {r.company for r in parsed.rows if r.company}
+    assert len(companies) >= 40  # wide variety of companies
+
+    locations = {r.location for r in parsed.rows if r.location}
+    assert len(locations) >= 10  # wide international coverage
+
+    # Verify key international hubs represented
+    loc_text = " ".join(filter(None, locations))
+    assert "Durham" in loc_text
+    assert "London" in loc_text
+    assert "Dubai" in loc_text
+    assert "Astana" in loc_text or "Almaty" in loc_text
+    assert "Singapore" in loc_text

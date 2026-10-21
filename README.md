@@ -4,25 +4,33 @@ Inner Circle is a personal relationship management prototype designed to help us
 
 ## Prerequisites & Environment
 
-- **OS**: Linux
-- **Python**: 3.12 (pinned to `3.12.3` in `.python-version`)
-- **Package Manager**: [uv](https://astral.sh/uv) (version `0.13.1`)
+- **OS**: macOS (Apple Silicon M1/M2/M3/M4 or Intel) or Linux
+- **Python**: 3.12 (managed automatically via `uv` or system Python 3.12)
+- **Package Manager**: [uv](https://astral.sh/uv) (fast Python package and project manager)
 
-## Setup
+### Installing `uv`
+
+- **macOS** (Homebrew):
+  ```bash
+  brew install uv
+  ```
+  *or via standalone installer:*
+  ```bash
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
+- **Linux**:
+  ```bash
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
+
+## Setup & First Run (Mac / Linux)
 
 ```bash
-# Ensure uv is installed and in your PATH:
-export PATH="$HOME/.local/bin:$PATH"
+# 1. Install dependencies into local .venv
+uv sync
 
-# Install locked dependencies into local .venv
-uv sync --locked
-```
-
-## Running the Application
-
-```bash
-# Start the local development web server
-uv run --locked uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+# 2. Start the local web application
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 Then open http://127.0.0.1:8000 in your browser.

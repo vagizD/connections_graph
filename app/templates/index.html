@@ -1,104 +1,183 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="controls-bar">
-  <form action="/" method="get" class="search-form" id="search-form">
-    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="11" cy="11" r="8"></circle>
-      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-    </svg>
-    <input 
-      type="text" 
-      name="q" 
-      id="search-input" 
-      class="search-input" 
-      placeholder="Search contacts by name, company, title, or location..." 
-      value="{{ search_query or '' }}"
-    >
-  </form>
 
-  <div class="stats-pill-group">
-    <div class="stat-pill" id="stat-connected-contacts">
-      Connected: <strong>{{ contacts | length }}</strong>
-    </div>
-    {% if disconnected_persons %}
-    <div class="stat-pill" id="stat-disconnected-contacts">
-      Archived/Disconnected: <strong>{{ disconnected_persons | length }}</strong>
-    </div>
-    {% endif %}
-  </div>
-</section>
+{% if active_tab == 'profile' %}
+<!-- ========================================== -->
+<!-- ENTRANCE TAB: PROFILE & NETWORK OVERVIEW   -->
+<!-- ========================================== -->
 
-{% if contacts %}
-<section class="contacts-grid" id="contacts-list">
-  {% for item in contacts %}
-  <article class="contact-card" id="contact-card-{{ item.person.id }}">
-    <div>
-      <div class="contact-top">
-        <div class="avatar">
-          {{ item.person.first_name[0] if item.person.first_name else '' }}{{ item.person.last_name[0] if item.person.last_name else '' }}
-        </div>
-        <div class="contact-info">
-          <a href="/contacts/{{ item.person.id }}" class="contact-name" id="contact-link-{{ item.person.id }}">
-            {{ item.person.display_name }}
-          </a>
-          <p class="contact-title">{{ item.person.job_title or "Role unrecorded" }}</p>
-          {% if item.person.company %}
-          <p class="contact-company">{{ item.person.company }}</p>
-          {% endif %}
-        </div>
+<!-- Focal Person Profile Card -->
+<section class="profile-card" id="focal-profile-card">
+  <div class="profile-header">
+    <div class="profile-avatar-lg" id="profile-avatar">
+      {{ focal_person.first_name[0] if focal_person.first_name else '' }}{{ focal_person.last_name[0] if focal_person.last_name else '' }}
+    </div>
+
+    <div class="profile-info">
+      <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+        <h2 class="profile-name" id="profile-display-name">{{ focal_person.display_name }}</h2>
+        <span class="focal-badge" style="font-size: 0.75rem;">Primary Profile</span>
       </div>
 
-      <div class="contact-meta">
-        {% if item.person.location %}
-        <span class="meta-badge" title="Location">
+      <p class="profile-title" id="profile-headline">
+        {{ focal_person.job_title or "Role unrecorded" }}
+        {% if focal_person.company %} at {{ focal_person.company }}{% endif %}
+      </p>
+
+      <div class="profile-meta-row">
+        {% if focal_person.location %}
+        <span class="profile-chip" title="Location">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
             <circle cx="12" cy="10" r="3"></circle>
           </svg>
-          {{ item.person.location }}
+          {{ focal_person.location }}
         </span>
         {% endif %}
 
-        {% if item.relationship.connected_on %}
-        <span class="meta-badge" title="Connected Date">
+        {% if focal_person.education %}
+        <span class="profile-chip" title="Alma Mater / Education" style="color: #fde047; border-color: rgba(253, 224, 71, 0.3);">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
           </svg>
-          Connected {{ item.relationship.connected_on.strftime('%b %d, %Y') }}
+          {{ focal_person.education }}
         </span>
         {% endif %}
 
-        {% if item.person.email %}
-        <span class="meta-badge" title="Email Available">
+        {% if focal_person.email %}
+        <span class="profile-chip" title="Email" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.3);">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
             <polyline points="22,6 12,13 2,6"></polyline>
           </svg>
-          {{ item.person.email }}
+          {{ focal_person.email }}
         </span>
         {% endif %}
       </div>
+
+      <!-- Interests & Topics -->
+      <div style="margin-top: 1rem;">
+        <span style="font-size: 0.775rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.4rem;">
+          Interests & Focus Areas:
+        </span>
+        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+          {% if focal_person.interest_list %}
+            {% for it in focal_person.interest_list %}
+            <span class="profile-chip" style="background: rgba(99, 102, 241, 0.15); color: #c7d2fe;">
+              #{{ it }}
+            </span>
+            {% endfor %}
+          {% else %}
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;">
+              No interests recorded yet &mdash; click &ldquo;Edit Profile&rdquo; to add topics of interest.
+            </span>
+          {% endif %}
+        </div>
+      </div>
     </div>
 
-    <div class="contact-actions">
-      <a href="/contacts/{{ item.person.id }}" class="btn btn-secondary btn-sm" id="btn-view-{{ item.person.id }}">
-        View Details
-      </a>
-      <form action="/contacts/{{ item.person.id }}/disconnect" method="post" style="display:inline;">
-        <button type="submit" class="btn btn-outline btn-sm" id="btn-disconnect-{{ item.person.id }}" title="Disconnect edge without deleting person">
-          Disconnect
-        </button>
-      </form>
+    <div>
+      <button type="button" class="btn btn-outline btn-sm" id="btn-toggle-edit-profile" onclick="toggleEditProfile()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+        Edit Profile
+      </button>
     </div>
-  </article>
-  {% endfor %}
+  </div>
 </section>
 
-{% else %}
+<!-- Collapsible Profile Edit Drawer -->
+<section class="profile-edit-drawer" id="profile-edit-drawer" style="display: none;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+    <h3 style="font-size: 1.1rem; font-weight: 700; margin: 0;">Edit Profile Information</h3>
+    <button type="button" class="btn btn-sm btn-outline" onclick="toggleEditProfile()">Close</button>
+  </div>
+
+  <form action="/profile/edit" method="post" id="profile-edit-form">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="edit_first_name">First Name *</label>
+        <input type="text" name="first_name" id="edit_first_name" class="form-control" value="{{ focal_person.first_name }}" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="edit_last_name">Last Name</label>
+        <input type="text" name="last_name" id="edit_last_name" class="form-control" value="{{ focal_person.last_name or '' }}">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="edit_job_title">Headline / Job Title</label>
+        <input type="text" name="job_title" id="edit_job_title" class="form-control" placeholder="e.g. Managing Director, AI Researcher" value="{{ focal_person.job_title or '' }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="edit_company">Company / Organization</label>
+        <input type="text" name="company" id="edit_company" class="form-control" placeholder="e.g. Duke Capital Partners" value="{{ focal_person.company or '' }}">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="edit_location">Location</label>
+        <input type="text" name="location" id="edit_location" class="form-control" placeholder="e.g. Durham, NC or San Francisco, CA" value="{{ focal_person.location or '' }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="edit_education">Education / Alma Mater</label>
+        <input type="text" name="education" id="edit_education" class="form-control" placeholder="e.g. Duke University, Stanford" value="{{ focal_person.education or '' }}">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="edit_interests">Interests & Topics (comma-separated)</label>
+      <input type="text" name="interests" id="edit_interests" class="form-control" placeholder="e.g. Artificial Intelligence, Venture Capital, Robotics, HealthTech" value="{{ focal_person.interests or '' }}">
+      <small style="color: var(--text-dim); font-size: 0.75rem;">Separate multiple topics with commas.</small>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="edit_email">Email Address</label>
+      <input type="email" name="email" id="edit_email" class="form-control" value="{{ focal_person.email or '' }}">
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
+      <button type="submit" class="btn btn-primary" id="btn-save-profile">Save Profile Changes</button>
+      <button type="button" class="btn btn-outline" onclick="toggleEditProfile()">Cancel</button>
+    </div>
+  </form>
+</section>
+
+<!-- Network Overview Metrics Grid -->
+<div class="metrics-grid">
+  <div class="metric-card" id="metric-connected-contacts">
+    <span class="metric-value">{{ total_contact_count }}</span>
+    <span class="metric-label">Connected Contacts</span>
+    <a href="/?tab=contacts" class="btn btn-sm btn-outline" style="margin-top: 0.5rem; align-self: flex-start;">
+      View Contacts Directory &rarr;
+    </a>
+  </div>
+
+  <div class="metric-card" id="metric-unique-companies">
+    <span class="metric-value">{{ unique_companies_count }}</span>
+    <span class="metric-label">Organizations Represented</span>
+    <span style="font-size: 0.775rem; color: var(--text-dim); margin-top: 0.35rem;">
+      Companies and entities in the network
+    </span>
+  </div>
+
+  <div class="metric-card" id="metric-recent-touches">
+    <span class="metric-value">{{ recent_touches_count }}</span>
+    <span class="metric-label">Active Touchpoints (90d)</span>
+    <span style="font-size: 0.775rem; color: var(--text-dim); margin-top: 0.35rem;">
+      Contacts engaged in the past 3 months
+    </span>
+  </div>
+</div>
+
+<!-- Getting Started or Recent Connections -->
+{% if total_contact_count == 0 %}
 <section class="empty-state" id="empty-state-view">
   <div class="empty-icon">
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -108,18 +187,109 @@
       <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
     </svg>
   </div>
-  {% if search_query %}
-  <h2 class="empty-title">No contacts matching "{{ search_query }}"</h2>
-  <p class="empty-desc">Try searching by a different name, company, or clearing your search term.</p>
-  <a href="/" class="btn btn-secondary">Clear Search</a>
-  {% else %}
-  <h2 class="empty-title">Your Network is Ready to Grow</h2>
-  <p class="empty-desc">Import your existing LinkedIn Connections CSV export or manually add contacts to start organizing your relationships.</p>
-  <div style="display:flex; justify-content:center; gap:0.75rem;">
-    <a href="/import" class="btn btn-primary" id="empty-import-btn">Import Connections.csv</a>
-    <a href="/contacts/new" class="btn btn-secondary" id="empty-add-btn">Add Contact Manually</a>
+  <h2 class="empty-title">Network Ready to Grow</h2>
+  <p class="empty-desc">Import LinkedIn Connections CSV export or instantly load the test connections table.</p>
+  <div style="display:flex; justify-content:center; gap:0.75rem; flex-wrap: wrap;">
+    <!-- Case 1: 100 Connections -->
+    <form action="/import/test-100" method="post" style="display:inline;">
+      <button type="submit" class="btn btn-primary" id="btn-import-test-100" title="100 connections with diverse companies & countries">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+        </svg>
+        Load 100 Connections (Full Network)
+      </button>
+    </form>
+
+    <!-- Case 2: 5 Classmates -->
+    <form action="/import/test-5" method="post" style="display:inline;">
+      <button type="submit" class="btn btn-secondary" id="btn-import-test-5" title="5 Duke classmates only for small tasks & single-node testing">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        Load 5 Classmates (Focused Test)
+      </button>
+    </form>
+
+    <!-- Backwards compatible instant import test table -->
+    <form action="/import/test-table" method="post" style="display:inline;">
+      <button type="submit" class="btn btn-outline" id="empty-import-test-btn" title="Quick import 10 fictional test contacts">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="3" y1="9" x2="21" y2="9"></line>
+          <line x1="9" y1="21" x2="9" y2="9"></line>
+        </svg>
+        Import Test Table (10)
+      </button>
+    </form>
+
+    <a href="/import" class="btn btn-outline" id="empty-import-btn">Import Connections.csv</a>
+    <a href="/contacts/new" class="btn btn-outline" id="empty-add-btn">Add Contact Manually</a>
   </div>
-  {% endif %}
+</section>
+
+{% else %}
+<section class="recent-contacts-section" id="recent-contacts-section">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+    <div>
+      <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0;">Recent Connections</h3>
+      <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.2rem 0 0 0;">
+        Quick access to contacts in the network
+      </p>
+    </div>
+    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+      <a href="/contacts/new" class="btn btn-primary btn-sm">+ Add Contact</a>
+      <a href="/import" class="btn btn-outline btn-sm">Import CSV</a>
+      <form action="/import/test-100" method="post" style="display:inline;">
+        <button type="submit" class="btn btn-outline btn-sm" id="btn-quick-import-100" title="Load 100 Duke international student connections">
+          Test 100
+        </button>
+      </form>
+      <form action="/import/test-5" method="post" style="display:inline;">
+        <button type="submit" class="btn btn-outline btn-sm" id="btn-quick-import-5" title="Load 5 Duke classmates">
+          Test 5
+        </button>
+      </form>
+      <form action="/import/test-table" method="post" style="display:inline;">
+        <button type="submit" class="btn btn-outline btn-sm" id="btn-quick-import-test" title="Quick import 10 test table">
+          Test 10
+        </button>
+      </form>
+      <form action="/network/reset" method="post" style="display:inline;" onsubmit="return confirm('Reset all contacts and edges to test a clean slate?');">
+        <button type="submit" class="btn btn-outline btn-sm" id="btn-reset-network" style="color: var(--accent-rose);" title="Reset test network">
+          Reset
+        </button>
+      </form>
+      <a href="/?tab=contacts" class="btn btn-outline btn-sm" style="color: var(--accent-teal);">
+        View All {{ total_contact_count }} Contacts &rarr;
+      </a>
+    </div>
+  </div>
+
+  <div class="recent-contacts-grid">
+    {% for c in recent_contacts %}
+    <div class="recent-contact-item">
+      <div class="avatar" style="width: 40px; height: 40px; font-size: 0.85rem; flex-shrink: 0;">
+        {{ c.person.first_name[0] if c.person.first_name else '' }}{{ c.person.last_name[0] if c.person.last_name else '' }}
+      </div>
+      <div style="flex: 1; min-width: 0;">
+        <a href="/contacts/{{ c.person.id }}" style="font-weight: 600; font-size: 0.9rem; color: var(--text-main); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          {{ c.person.display_name }}
+        </a>
+        <span style="font-size: 0.775rem; color: var(--text-muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          {{ c.person.job_title or c.person.company or "Role unrecorded" }}
+        </span>
+      </div>
+      <a href="/contacts/{{ c.person.id }}" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">
+        View
+      </a>
+    </div>
+    {% endfor %}
+  </div>
 </section>
 {% endif %}
 
@@ -158,5 +328,1857 @@
   </div>
 </section>
 {% endif %}
+
+
+{% elif active_tab == 'tasks' %}
+<!-- ========================================== -->
+<!-- DEDICATED TAB: TASKS & ACTION ITEMS        -->
+<!-- ========================================== -->
+
+<header class="contacts-toolbar" style="margin-bottom:1.5rem;">
+  <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+    <h2 style="font-size:1.25rem; font-weight:700; margin:0;">Tasks</h2>
+    <span class="stat-pill" id="stat-pending-tasks" style="font-size:0.8rem; background:rgba(99, 102, 241, 0.15); color:var(--primary-light, #818cf8);">
+      {{ pending_tasks_count }} Pending
+    </span>
+    {% if completed_tasks_count > 0 %}
+    <span class="stat-pill" id="stat-completed-tasks" style="font-size:0.8rem; background:rgba(16, 185, 129, 0.15); color:#6ee7b7;">
+      {{ completed_tasks_count }} Completed
+    </span>
+    {% endif %}
+  </div>
+
+  <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+    <button type="button" class="btn btn-primary btn-sm" onclick="toggleAddTaskCard()" id="btn-open-add-task">
+      + Add Task
+    </button>
+  </div>
+</header>
+
+<!-- Inline Add Task Card (collapsed by default) -->
+<div id="add-task-card" class="card" style="display:none; margin-bottom:1.5rem; background:var(--bg-secondary); border-color:var(--border-focus);">
+  <h4 style="font-size:0.95rem; margin:0 0 1rem 0;">New Task</h4>
+  <form action="/tasks/new" method="post" id="form-create-task">
+    <input type="hidden" name="redirect_to" value="/?tab=tasks">
+    <div class="form-row">
+      <div class="form-group" style="flex:2;">
+        <label class="form-label" for="task_title">Task Description</label>
+        <input type="text" name="title" id="task_title" class="form-control" placeholder="e.g. Follow up on term sheet, send introduction email..." required>
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label class="form-label" for="task_deadline">Deadline</label>
+        <input type="date" name="deadline" id="task_deadline" class="form-control">
+        <span style="font-size:0.75rem; color:var(--text-dim);">Defaults to 1 week if empty</span>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label class="form-label" for="task_contact">Associated Contact (optional)</label>
+      <select name="contact_person_id" id="task_contact" class="form-control">
+        <option value="">-- No Contact (General Task) --</option>
+        {% for c in all_contacts %}
+        <option value="{{ c.person.id }}">{{ c.person.display_name }}{% if c.person.company %} ({{ c.person.company }}){% endif %}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="toggleAddTaskCard()">Cancel</button>
+      <button type="submit" class="btn btn-primary btn-sm" id="btn-submit-task">Add Task</button>
+    </div>
+  </form>
+</div>
+
+<!-- Task List View (Sorted by Deadline) -->
+<section class="card" style="padding:1.25rem;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-subtle); padding-bottom:0.75rem;">
+    <span style="font-size:0.85rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">
+      All Tasks (Sorted by Deadline)
+    </span>
+    <span style="font-size:0.8rem; color:var(--text-dim);">
+      Closest deadlines first
+    </span>
+  </div>
+
+  {% if tasks %}
+  <div class="tasks-container" id="tasks-list">
+    {% for task in tasks %}
+    <div class="task-item {% if task.is_completed %}task-completed{% endif %}" id="task-row-{{ task.id }}">
+      <div class="task-left">
+        <form action="/tasks/{{ task.id }}/toggle" method="post" style="display:inline; margin:0;">
+          <input type="hidden" name="redirect_to" value="/?tab=tasks">
+          <button type="submit" class="task-check-btn {% if task.is_completed %}checked{% endif %}" id="btn-toggle-task-{{ task.id }}" title="{% if task.is_completed %}Mark pending{% else %}Mark completed{% endif %}">
+            {% if task.is_completed %}✓{% endif %}
+          </button>
+        </form>
+
+        <div class="task-content">
+          <span class="task-title">{{ task.title }}</span>
+          <div class="task-meta">
+            {% if task.contact_name %}
+            <a href="/contacts/{{ task.contact_person_id }}" class="task-contact-link" title="View contact">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              {{ task.contact_name }}{% if task.contact_company %} ({{ task.contact_company }}){% endif %}
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="task-right">
+        {% if task.is_completed %}
+        <span class="task-deadline-badge task-deadline-completed">
+          ✓ Completed
+        </span>
+        {% elif task.is_overdue %}
+        <span class="task-deadline-badge task-deadline-overdue" title="Overdue">
+          ⚠️ Due {{ task.deadline.strftime('%b %d') }} ({{ task.days_until_deadline | abs }}d overdue)
+        </span>
+        {% elif task.is_due_today %}
+        <span class="task-deadline-badge task-deadline-today" title="Due today">
+          ⭐ Due Today
+        </span>
+        {% else %}
+        <span class="task-deadline-badge task-deadline-upcoming" title="Upcoming deadline">
+          📅 Due {{ task.deadline.strftime('%b %d, %Y') }} (in {{ task.days_until_deadline }}d)
+        </span>
+        {% endif %}
+
+        <form action="/tasks/{{ task.id }}/delete" method="post" style="display:inline; margin:0;">
+          <input type="hidden" name="redirect_to" value="/?tab=tasks">
+          <button type="submit" class="btn btn-outline btn-sm" style="padding:0.15rem 0.4rem; font-size:0.75rem;" title="Delete task">
+            &times;
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align:center; padding:3rem 1rem;">
+    <div style="font-size:2rem; margin-bottom:0.5rem;">📋</div>
+    <h3 style="font-size:1.1rem; font-weight:600; color:var(--text-main); margin-bottom:0.35rem;">No tasks yet</h3>
+    <p style="font-size:0.85rem; color:var(--text-muted); max-width:420px; margin:0 auto 1.25rem auto; line-height:1.5;">
+      When interactions are added with contacts, action items and next steps are automatically created with a 1-week deadline, or add a task below.
+    </p>
+    <button type="button" class="btn btn-primary btn-sm" onclick="toggleAddTaskCard()">
+      + Add First Task
+    </button>
+  </div>
+  {% endif %}
+</section>
+
+{% else %}
+<!-- ========================================== -->
+<!-- DEDICATED TAB: CONTACTS DIRECTORY          -->
+<!-- ========================================== -->
+
+<!-- Dedicated Contacts Header & Toolbar -->
+<header class="contacts-toolbar">
+  <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+    <h2 style="font-size: 1.25rem; font-weight: 700; margin: 0;">Contacts Directory</h2>
+    <span class="stat-pill" id="stat-connected-contacts" style="font-size: 0.8rem;">
+      Matching: <strong>{{ filter_result.total_unique_contacts }}</strong>
+      {% if filter_result.total_unique_contacts != total_contact_count %}
+        of {{ total_contact_count }}
+      {% endif %}
+    </span>
+    {% if disconnected_persons %}
+    <span class="stat-pill" id="stat-disconnected-contacts" style="font-size: 0.8rem; color: var(--text-dim);">
+      Archived: {{ disconnected_persons | length }}
+    </span>
+    {% endif %}
+  </div>
+
+  <!-- View Switcher (List vs Graph) -->
+  <div class="view-switch-control" role="group" aria-label="View Mode Switcher">
+    <button type="button" class="view-switch-btn {% if view_mode != 'graph' %}active{% endif %}" id="btn-view-list" onclick="setViewMode('list')" title="Standard List View">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+      </svg>
+      List View
+    </button>
+    <button type="button" class="view-switch-btn {% if view_mode == 'graph' %}active{% endif %}" id="btn-view-graph" onclick="setViewMode('graph')" title="Network Graph View">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"></circle>
+        <circle cx="19" cy="5" r="2"></circle>
+        <circle cx="5" cy="5" r="2"></circle>
+        <circle cx="5" cy="19" r="2"></circle>
+        <circle cx="19" cy="19" r="2"></circle>
+        <line x1="12" y1="9" x2="19" y2="5"></line>
+        <line x1="12" y1="9" x2="5" y2="5"></line>
+        <line x1="12" y1="15" x2="5" y2="19"></line>
+        <line x1="12" y1="15" x2="19" y2="19"></line>
+      </svg>
+      Graph View
+    </button>
+  </div>
+
+  <div class="contacts-toolbar-actions">
+    <!-- Smart Grouping Trigger Button -->
+    <button type="button" class="btn {% if active_split %}btn-primary{% else %}btn-outline{% endif %} btn-sm" id="btn-toggle-split" onclick="toggleSplitDrawer()" style="display: inline-flex; align-items: center; gap: 0.4rem;" title="Smart Grouping & Statistics">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+      <span>Smart Grouping</span>
+      {% if active_split %}
+      <span class="active-split-badge-pill" title="{{ active_split.title }}">Active</span>
+      {% endif %}
+    </button>
+
+    <!-- Toggle Filters Button (Collapsed by default!) -->
+    <button type="button" class="btn btn-outline btn-sm" id="btn-toggle-filters" onclick="toggleFilters()" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+      </svg>
+      <span>Filters & Grouping</span>
+      {% if filter_result.active_filters or group_by != 'none' %}
+      <span style="background: var(--accent-indigo); color: #fff; font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: var(--radius-full); font-weight: 600;">
+        {{ filter_result.active_filters | length + (1 if group_by != 'none' else 0) }}
+      </span>
+      {% endif %}
+    </button>
+
+    <a href="/contacts/new" class="btn btn-primary btn-sm" id="btn-add-contact">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Add Contact
+    </a>
+
+    <a href="/import" class="btn btn-outline btn-sm" id="btn-import-csv">
+      Import CSV
+    </a>
+
+    <form action="/import/test-100" method="post" style="display:inline;">
+      <button type="submit" class="btn btn-outline btn-sm" id="btn-toolbar-import-100" title="Instantly load 100 Duke international student connections">
+        Test 100
+      </button>
+    </form>
+
+    <form action="/import/test-5" method="post" style="display:inline;">
+      <button type="submit" class="btn btn-outline btn-sm" id="btn-toolbar-import-5" title="Instantly load 5 Duke classmates">
+        Test 5
+      </button>
+    </form>
+
+    <form action="/import/test-table" method="post" style="display:inline;">
+      <button type="submit" class="btn btn-outline btn-sm" id="btn-quick-import-test" title="Instantly import 10 fictional test contacts">
+        Test 10
+      </button>
+    </form>
+
+    <form action="/network/reset" method="post" style="display:inline;" onsubmit="return confirm('Reset all contacts and edges to test a clean slate?');">
+      <button type="submit" class="btn btn-outline btn-sm" id="btn-toolbar-reset" style="color: var(--accent-rose);" title="Reset test network">
+        Reset
+      </button>
+    </form>
+  </div>
+</header>
+
+<!-- Fast Search Bar on Contacts Tab -->
+<div class="contacts-search-container" id="contacts-search-container">
+  <form action="/" method="get" id="contacts-fast-search-form" style="display: flex; gap: 0.65rem; align-items: center; width: 100%;">
+    <input type="hidden" name="tab" value="contacts">
+    {% if group_by != 'none' %}
+    <input type="hidden" name="group_by" value="{{ group_by }}">
+    {% endif %}
+
+    <div style="position: relative; flex: 1;">
+      <!-- Search Icon -->
+      <span style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; display: flex; align-items: center;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </span>
+
+      <!-- Search Input -->
+      <input 
+        type="search" 
+        name="q" 
+        id="contacts-search-input" 
+        class="form-control contacts-search-input" 
+        placeholder="Fast search by keyword (name, company, title, location, school, tags...)" 
+        value="{{ criteria.search_query or '' }}" 
+        autocomplete="off"
+        style="padding-left: 2.75rem; padding-right: 2.5rem; height: 42px; font-size: 0.925rem; border-radius: var(--radius-md); background: rgba(17, 24, 39, 0.7); border: 1px solid var(--border-subtle); width: 100%;"
+      >
+
+      <!-- Clear Icon -->
+      {% if criteria.search_query %}
+      <a href="/?tab=contacts{% if group_by != 'none' %}&group_by={{ group_by }}{% endif %}" id="btn-clear-search" style="position: absolute; right: 0.85rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); display: flex; align-items: center; padding: 0.25rem; border-radius: var(--radius-sm);" title="Clear search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </a>
+      {% endif %}
+    </div>
+
+    <!-- Search Button -->
+    <button type="submit" class="btn btn-primary" id="btn-fast-search" style="height: 42px; padding: 0 1.25rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; flex-shrink: 0;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <span>Search</span>
+    </button>
+  </form>
+</div>
+
+<!-- Collapsible Smart Grouping Panel -->
+<section class="ai-split-panel" id="ai-split-panel" style="display: none;">
+  <div class="split-panel-header">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: #fff; margin: 0;">Smart Grouping</h3>
+      </div>
+      <p style="font-size: 0.825rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">
+        Segment contacts automatically by university, industry, role, or custom themes with group statistics.
+      </p>
+    </div>
+    <button type="button" class="btn btn-sm btn-outline" onclick="toggleSplitDrawer()" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">
+      Close &times;
+    </button>
+  </div>
+
+  <!-- Presets -->
+  <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.35rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
+    Suggested Groupings:
+  </div>
+  <div class="split-presets-row">
+    <button type="button" class="split-preset-chip" onclick="setSplitPrompt('University grouping')">
+      🎓 University & Schools
+    </button>
+    <button type="button" class="split-preset-chip" onclick="setSplitPrompt('Founders, Tech Executives, VCs & Angels, Duke Classmates')">
+      Founders, Tech Leaders, VCs, Classmates
+    </button>
+    <button type="button" class="split-preset-chip" onclick="setSplitPrompt('Split by Industry (Tech & AI, Finance & VC, Healthcare, Consulting, Academia)')">
+      Split by Industry
+    </button>
+    <button type="button" class="split-preset-chip" onclick="setSplitPrompt('Decision Makers & C-Suite, Mentors & Advisors, Peers & Engineers, Early-Career')">
+      Seniority & Decision Makers
+    </button>
+    <button type="button" class="split-preset-chip" onclick="setSplitPrompt('Geographic Hubs & Regions (Bay Area, New York, Triangle NC, International)')">
+      Geographic Hubs
+    </button>
+  </div>
+
+  <form action="/splits/create" method="post" id="ai-split-form">
+    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+      <textarea 
+        name="prompt" 
+        id="split-prompt-input" 
+        class="split-prompt-input" 
+        rows="2" 
+        placeholder="Enter grouping prompt, e.g. 'University grouping', 'Founders, Product Leaders, Duke Classmates', 'Industry breakdown'..." 
+        required
+      >{{ active_split.prompt if active_split else '' }}</textarea>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.6rem; align-items: center;">
+        {% if active_split %}
+        <span style="font-size: 0.8rem; color: var(--text-dim); margin-right: auto;">
+          Currently active: <strong>{{ active_split.title }}</strong>
+        </span>
+        {% endif %}
+        <button type="button" class="btn btn-outline btn-sm" onclick="toggleSplitDrawer()">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm" id="btn-submit-split">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          Apply Grouping
+        </button>
+      </div>
+    </div>
+  </form>
+</section>
+
+<!-- Collapsible Filter & Grouping Dashboard Panel (Collapsed by default!) -->
+<section class="filter-container" id="filter-dashboard" style="display: none;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">
+      Filter & Group Multi-Criteria Settings
+    </span>
+    <button type="button" class="btn btn-sm btn-outline" onclick="toggleFilters()" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">
+      Close Panel &times;
+    </button>
+  </div>
+
+  <form action="/" method="get" id="filter-form">
+    <input type="hidden" name="tab" value="contacts">
+
+    <div class="filter-grid">
+      <!-- Search Input -->
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label" for="search-input">Keyword Search</label>
+        <input 
+          type="text" 
+          name="q" 
+          id="search-input" 
+          class="form-control" 
+          placeholder="Name, role, company, location..." 
+          value="{{ criteria.search_query or '' }}"
+        >
+      </div>
+
+      <!-- Group Dimension Selector -->
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label" for="group_by">Group Network By</label>
+        <select name="group_by" id="group_by" class="form-control" onchange="document.getElementById('filter-form').submit();">
+          <option value="none" {% if group_by == 'none' %}selected{% endif %}>Flat List (No Grouping)</option>
+          <option value="company" {% if group_by == 'company' %}selected{% endif %}>Company / Org</option>
+          <option value="location" {% if group_by == 'location' %}selected{% endif %}>Location</option>
+          <option value="education" {% if group_by == 'education' %}selected{% endif %}>Education / Alma Mater</option>
+          <option value="context_label" {% if group_by == 'context_label' %}selected{% endif %}>Relationship Context</option>
+          <option value="interest" {% if group_by == 'interest' %}selected{% endif %}>Interests & Topics</option>
+          <option value="last_interaction" {% if group_by == 'last_interaction' %}selected{% endif %}>Interaction Recency</option>
+        </select>
+      </div>
+
+      <!-- Filter: Location -->
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label" for="filter_location">Location</label>
+        <input 
+          type="text" 
+          name="location" 
+          id="filter_location" 
+          class="form-control" 
+          list="location-options" 
+          placeholder="e.g. London, Durham..." 
+          value="{{ criteria.location or '' }}"
+        >
+        <datalist id="location-options">
+          {% for loc in facets.locations %}
+          <option value="{{ loc }}"></option>
+          {% endfor %}
+        </datalist>
+      </div>
+
+      <!-- Filter: Education -->
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label" for="filter_education">Education</label>
+        <input 
+          type="text" 
+          name="education" 
+          id="filter_education" 
+          class="form-control" 
+          list="education-options" 
+          placeholder="e.g. Duke, Stanford..." 
+          value="{{ criteria.education or '' }}"
+        >
+        <datalist id="education-options">
+          {% for edu in facets.educations %}
+          <option value="{{ edu }}"></option>
+          {% endfor %}
+        </datalist>
+      </div>
+
+      <!-- Filter: Interests -->
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label" for="filter_interest">Interest / Topic</label>
+        <input 
+          type="text" 
+          name="interest" 
+          id="filter_interest" 
+          class="form-control" 
+          list="interest-options" 
+          placeholder="e.g. Robotics, AI..." 
+          value="{{ criteria.interest or '' }}"
+        >
+        <datalist id="interest-options">
+          {% for it in facets.interests %}
+          <option value="{{ it }}"></option>
+          {% endfor %}
+        </datalist>
+      </div>
+
+      <!-- Filter: Relationship Context -->
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label" for="filter_context">Relationship Context</label>
+        <input 
+          type="text" 
+          name="context_label" 
+          id="filter_context" 
+          class="form-control" 
+          list="context-options" 
+          placeholder="e.g. Classmate, Advisor..." 
+          value="{{ criteria.context_label or '' }}"
+        >
+        <datalist id="context-options">
+          {% for ctx in facets.context_labels %}
+          <option value="{{ ctx }}"></option>
+          {% endfor %}
+        </datalist>
+      </div>
+
+      <!-- Filter: Last Interaction -->
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label" for="filter_last_interaction">Last Interaction</label>
+        <select name="last_interaction" id="filter_last_interaction" class="form-control">
+          <option value="">Any Time</option>
+          <option value="recent_30" {% if criteria.last_interaction == 'recent_30' %}selected{% endif %}>Past 30 Days</option>
+          <option value="recent_90" {% if criteria.last_interaction == 'recent_90' %}selected{% endif %}>Past 90 Days</option>
+          <option value="recent_365" {% if criteria.last_interaction == 'recent_365' %}selected{% endif %}>Past 1 Year</option>
+          <option value="older_365" {% if criteria.last_interaction == 'older_365' %}selected{% endif %}>Over 1 Year Ago</option>
+          <option value="unknown" {% if criteria.last_interaction == 'unknown' %}selected{% endif %}>Unknown / No Record</option>
+        </select>
+      </div>
+
+      <!-- Submit / Filter Buttons -->
+      <div style="display:flex; gap:0.5rem;">
+        <button type="submit" class="btn btn-primary" id="btn-apply-filters" style="flex:1;">
+          Apply Filters
+        </button>
+        <a href="/?tab=contacts" class="btn btn-outline" id="btn-clear-filters" title="Reset all filters">
+          Reset
+        </a>
+      </div>
+    </div>
+  </form>
+</section>
+
+<!-- Active Filter Chips Bar (Always visible when filters or non-default grouping applied) -->
+{% if filter_result.active_filters or group_by != 'none' %}
+<div class="filter-chips-row" id="active-filter-chips" style="margin-bottom: 1.5rem;">
+  <span style="font-size:0.8rem; color:var(--text-muted);">Active Filters:</span>
+  {% if group_by != 'none' %}
+  <span class="filter-chip" style="background: rgba(20, 184, 166, 0.15); color: #5eead4; border-color: rgba(20, 184, 166, 0.3);">
+    <strong>Grouped By:</strong> {{ group_by }}
+  </span>
+  {% endif %}
+  {% for name, val in filter_result.active_filters.items() %}
+  <span class="filter-chip">
+    <strong>{{ name }}:</strong> {{ val }}
+  </span>
+  {% endfor %}
+  <button type="button" class="btn btn-sm btn-outline" onclick="toggleFilters()" style="padding: 0.15rem 0.5rem; font-size: 0.725rem;">
+    Modify Filters
+  </button>
+  <a href="/?tab=contacts" style="font-size:0.75rem; color:var(--accent-teal); margin-left:auto; text-decoration:underline;">
+    Clear All Filters
+  </a>
+</div>
+{% endif %}
+
+{% if active_split %}
+<div class="active-split-banner" id="active-split-banner">
+  <div class="active-split-info">
+    <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+      <span class="active-split-label">Active Grouping:</span>
+      <strong class="active-split-title">{{ active_split.title }}</strong>
+      <span class="active-split-prompt">&ldquo;{{ active_split.prompt }}&rdquo;</span>
+    </div>
+    <div class="active-split-groups-summary">
+      {% for g in active_split.groups %}
+      <span class="active-split-pill" style="border-left: 3px solid {{ g.color }};">
+        <span class="split-pill-dot" style="background: {{ g.color }};"></span>
+        <strong>{{ g.group_name }}</strong>: {{ g.contact_count }}
+      </span>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="active-split-actions">
+    <button type="button" class="btn btn-sm btn-outline" onclick="toggleSplitDrawer()" title="Modify grouping criteria">
+      Modify Grouping
+    </button>
+    <form action="/splits/clear" method="post" style="display:inline;">
+      <button type="submit" class="btn btn-sm btn-outline" style="color:var(--text-muted);" title="Clear current grouping">
+        Clear Grouping
+      </button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- ========================================== -->
+<!-- VIEW MODE 1: LIST PRESENTATION             -->
+<!-- ========================================== -->
+<div id="contacts-list-container" class="contacts-list-container" style="{% if view_mode == 'graph' %}display: none;{% endif %}">
+<!-- Contacts Presentation: AI Split or Filtered Groups -->
+{% if split_groups %}
+  {% for grp in split_groups %}
+  <section class="group-section split-group-section" id="split-group-{{ loop.index }}">
+    <!-- Group Statistics Card -->
+    <div class="split-stats-card" style="border-top: 3px solid {{ grp.stats.color }};">
+      <div class="split-stats-header">
+        <div class="split-stats-title-wrap">
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <span class="split-badge-color-dot" style="background: {{ grp.stats.color }};"></span>
+            <h3 class="split-group-name">{{ grp.stats.group_name }}</h3>
+          </div>
+          {% if grp.stats.description %}
+          <p class="split-group-desc">{{ grp.stats.description }}</p>
+          {% endif %}
+        </div>
+        <div class="split-stats-count-wrap">
+          <span class="split-stat-badge">
+            <strong>{{ grp.stats.contact_count }}</strong> {% if grp.stats.contact_count == 1 %}contact{% else %}contacts{% endif %}
+          </span>
+          <span class="split-stat-percentage">
+            {{ grp.stats.percentage_of_network }}% of network
+          </span>
+        </div>
+      </div>
+
+      <!-- Additional Statistics Metrics Grid -->
+      <div class="split-metrics-grid">
+        <div class="split-metric-item">
+          <span class="split-metric-label">Touchpoint Rate (90d)</span>
+          <span class="split-metric-val">{{ grp.stats.active_touchpoint_rate }}%</span>
+        </div>
+
+        <div class="split-metric-item">
+          <span class="split-metric-label">Open Follow-ups</span>
+          <span class="split-metric-val {% if grp.stats.pending_tasks_count > 0 %}has-tasks{% endif %}">
+            {{ grp.stats.pending_tasks_count }} {% if grp.stats.pending_tasks_count == 1 %}task{% else %}tasks{% endif %}
+          </span>
+        </div>
+
+        {% if grp.stats.companies_represented %}
+        <div class="split-metric-item split-metric-wide">
+          <span class="split-metric-label">Key Organizations ({{ grp.stats.companies_represented | length }})</span>
+          <span class="split-metric-tags">
+            {% for comp in grp.stats.companies_represented[:5] %}
+            <span class="split-tag">{{ comp }}</span>
+            {% endfor %}
+            {% if grp.stats.companies_represented | length > 5 %}
+            <span class="split-tag-more">+{{ grp.stats.companies_represented | length - 5 }} more</span>
+            {% endif %}
+          </span>
+        </div>
+        {% endif %}
+
+        {% if grp.stats.top_locations %}
+        <div class="split-metric-item">
+          <span class="split-metric-label">Top Hubs</span>
+          <span class="split-metric-tags">
+            {% for loc in grp.stats.top_locations[:3] %}
+            <span class="split-tag">📍 {{ loc }}</span>
+            {% endfor %}
+          </span>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Strategic AI Group Insight -->
+      {% if grp.stats.strategic_insight %}
+      <div class="split-group-insight">
+        <span class="split-insight-icon">💡</span>
+        <span class="split-insight-text">{{ grp.stats.strategic_insight }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Contacts in this split group -->
+    <div class="contacts-grid">
+      {% for item, rationale in grp.contacts %}
+      <article class="contact-card" id="contact-card-{{ item.person.id }}">
+        <div>
+          <div class="contact-top">
+            <div class="avatar" style="background: {{ grp.stats.color }};">
+              {{ item.person.first_name[0] if item.person.first_name else '' }}{{ item.person.last_name[0] if item.person.last_name else '' }}
+            </div>
+            <div class="contact-info">
+              <a href="/contacts/{{ item.person.id }}" class="contact-name" id="contact-link-{{ item.person.id }}">
+                {{ item.person.display_name }}
+              </a>
+              <p class="contact-title">{{ item.person.job_title or "Role unrecorded" }}</p>
+              {% if item.person.company %}
+              <p class="contact-company">{{ item.person.company }}</p>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Split Rationale Tag -->
+          {% if rationale %}
+          <div class="split-rationale-pill" title="Group Assignment Rationale">
+            <span style="color: {{ grp.stats.color }}; font-weight: bold;">✦</span> {{ rationale }}
+          </div>
+          {% endif %}
+
+          <!-- Total State Summary if present -->
+          {% if item.relationship.summary %}
+          <p style="font-size:0.825rem; color:var(--text-main); background:rgba(255,255,255,0.03); border-radius:var(--radius-sm); padding:0.4rem 0.6rem; margin:0.6rem 0 0.4rem 0; border-left:2px solid {{ grp.stats.color }};">
+            {{ item.relationship.summary }}
+          </p>
+          {% endif %}
+
+          <div class="contact-meta">
+            {% if item.person.location %}
+            <span class="meta-badge" title="Location">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              {{ item.person.location }}
+            </span>
+            {% endif %}
+
+            {% if item.person.education %}
+            <span class="meta-badge" title="Education / Alma Mater" style="color:#fde047;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+              </svg>
+              {{ item.person.education }}
+            </span>
+            {% endif %}
+
+            {% if item.relationship.last_interaction_date %}
+            <span class="meta-badge" title="Last Touchpoint" style="color:#5eead4;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              Last touch: {{ item.relationship.last_interaction_date.strftime('%b %d, %Y') }}
+            </span>
+            {% else %}
+            <span class="meta-badge" title="No recorded interactions yet" style="color:var(--text-dim);">
+              No interaction recorded
+            </span>
+            {% endif %}
+
+            {% if item.relationship.connected_on %}
+            <span class="meta-badge" title="Connected Date">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              Connected {{ item.relationship.connected_on.strftime('%b %d, %Y') }}
+            </span>
+            {% endif %}
+          </div>
+
+          <!-- Tags: Interests & Context Labels -->
+          {% if item.person.interest_list or item.relationship.context_label_list %}
+          <div style="display:flex; gap:0.35rem; flex-wrap:wrap; margin-top:0.65rem;">
+            {% for it in item.person.interest_list %}
+            <span style="font-size:0.7rem; padding:0.15rem 0.45rem; border-radius:var(--radius-full); background:rgba(99,102,241,0.15); color:#a5b4fc;">
+              #{{ it }}
+            </span>
+            {% endfor %}
+            {% for lbl in item.relationship.context_label_list %}
+            <span style="font-size:0.7rem; padding:0.15rem 0.45rem; border-radius:var(--radius-full); background:rgba(20,184,166,0.15); color:#5eead4;">
+              &bull; {{ lbl }}
+            </span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="contact-actions" style="margin-top:1rem;">
+          <a href="/contacts/{{ item.person.id }}" class="btn btn-secondary btn-sm" id="btn-view-split-{{ item.person.id }}">
+            View & Log Conversations
+          </a>
+          <form action="/contacts/{{ item.person.id }}/disconnect" method="post" style="display:inline;">
+            <button type="submit" class="btn btn-outline btn-sm" id="btn-disconnect-split-{{ item.person.id }}" title="Disconnect edge without deleting person">
+              Disconnect
+            </button>
+          </form>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+
+{% elif filter_result.total_unique_contacts > 0 %}
+  {% for grp in filter_result.groups %}
+  <section class="group-section" id="group-{{ loop.index }}">
+    {% if filter_result.group_dimension != 'none' %}
+    <div class="group-header">
+      <div class="group-title">
+        <span>{{ grp.dimension_value }}</span>
+        <span class="group-count-badge">{{ grp.count }} {% if grp.count == 1 %}contact{% else %}contacts{% endif %}</span>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="contacts-grid">
+      {% for item in grp.contacts %}
+      <article class="contact-card" id="contact-card-{{ item.person.id }}">
+        <div>
+          <div class="contact-top">
+            <div class="avatar">
+              {{ item.person.first_name[0] if item.person.first_name else '' }}{{ item.person.last_name[0] if item.person.last_name else '' }}
+            </div>
+            <div class="contact-info">
+              <a href="/contacts/{{ item.person.id }}" class="contact-name" id="contact-link-{{ item.person.id }}">
+                {{ item.person.display_name }}
+              </a>
+              <p class="contact-title">{{ item.person.job_title or "Role unrecorded" }}</p>
+              {% if item.person.company %}
+              <p class="contact-company">{{ item.person.company }}</p>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Total State Summary if present -->
+          {% if item.relationship.summary %}
+          <p style="font-size:0.825rem; color:var(--text-main); background:rgba(255,255,255,0.03); border-radius:var(--radius-sm); padding:0.4rem 0.6rem; margin:0.6rem 0 0.4rem 0; border-left:2px solid var(--accent-teal);">
+            {{ item.relationship.summary }}
+          </p>
+          {% endif %}
+
+          <div class="contact-meta">
+            {% if item.person.location %}
+            <span class="meta-badge" title="Location">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              {{ item.person.location }}
+            </span>
+            {% endif %}
+
+            {% if item.person.education %}
+            <span class="meta-badge" title="Education / Alma Mater" style="color:#fde047;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+              </svg>
+              {{ item.person.education }}
+            </span>
+            {% endif %}
+
+            {% if item.relationship.last_interaction_date %}
+            <span class="meta-badge" title="Last Touchpoint" style="color:#5eead4;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              Last touch: {{ item.relationship.last_interaction_date.strftime('%b %d, %Y') }}
+            </span>
+            {% else %}
+            <span class="meta-badge" title="No recorded interactions yet" style="color:var(--text-dim);">
+              No interaction recorded
+            </span>
+            {% endif %}
+
+            {% if item.relationship.connected_on %}
+            <span class="meta-badge" title="Connected Date">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              Connected {{ item.relationship.connected_on.strftime('%b %d, %Y') }}
+            </span>
+            {% endif %}
+          </div>
+
+          <!-- Tags: Interests & Context Labels -->
+          {% if item.person.interest_list or item.relationship.context_label_list %}
+          <div style="display:flex; gap:0.35rem; flex-wrap:wrap; margin-top:0.65rem;">
+            {% for it in item.person.interest_list %}
+            <span style="font-size:0.7rem; padding:0.15rem 0.45rem; border-radius:var(--radius-full); background:rgba(99,102,241,0.15); color:#a5b4fc;">
+              #{{ it }}
+            </span>
+            {% endfor %}
+            {% for lbl in item.relationship.context_label_list %}
+            <span style="font-size:0.7rem; padding:0.15rem 0.45rem; border-radius:var(--radius-full); background:rgba(20,184,166,0.15); color:#5eead4;">
+              &bull; {{ lbl }}
+            </span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="contact-actions" style="margin-top:1rem;">
+          <a href="/contacts/{{ item.person.id }}" class="btn btn-secondary btn-sm" id="btn-view-{{ item.person.id }}">
+            View & Log Conversations
+          </a>
+          <form action="/contacts/{{ item.person.id }}/disconnect" method="post" style="display:inline;">
+            <button type="submit" class="btn btn-outline btn-sm" id="btn-disconnect-{{ item.person.id }}" title="Disconnect edge without deleting person">
+              Disconnect
+            </button>
+          </form>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+
+{% else %}
+<section class="empty-state" id="empty-state-view">
+  <div class="empty-icon">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+      <circle cx="9" cy="7" r="4"></circle>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+    </svg>
+  </div>
+  {% if filter_result.active_filters %}
+  <h2 class="empty-title">No contacts matching active filters</h2>
+  <p class="empty-desc">Try clearing or broadening your filter criteria to see more of your network.</p>
+  <a href="/?tab=contacts" class="btn btn-secondary">Reset All Filters</a>
+  {% else %}
+  <h2 class="empty-title">Network Ready to Grow</h2>
+  <p class="empty-desc">Import LinkedIn Connections CSV export or instantly load the test connections table.</p>
+  <div style="display:flex; justify-content:center; gap:0.75rem; flex-wrap: wrap;">
+    <form action="/import/test-table" method="post" style="display:inline;">
+      <button type="submit" class="btn btn-primary" id="empty-import-test-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="3" y1="9" x2="21" y2="9"></line>
+          <line x1="9" y1="21" x2="9" y2="9"></line>
+        </svg>
+        Instantly Import Test Connections
+      </button>
+    </form>
+    <a href="/import" class="btn btn-secondary" id="empty-import-btn">Import Connections.csv</a>
+    <a href="/contacts/new" class="btn btn-secondary" id="empty-add-btn">Add Contact Manually</a>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+</div>
+
+<!-- ========================================== -->
+<!-- VIEW MODE 2: INTERACTIVE NETWORK GRAPH     -->
+<!-- ========================================== -->
+<div id="contacts-graph-container" class="contacts-graph-view" style="{% if view_mode != 'graph' %}display: none;{% endif %}">
+  <!-- Graph Header Bar -->
+  <div class="graph-header-bar">
+    <div class="graph-header-left">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-weight: 700; font-size: 0.95rem; color: #fff;">Network Graph</span>
+        <span class="graph-badge-planar" title="Interactive network view with focal contact at the center">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          Network View
+        </span>
+      </div>
+
+      <!-- Cluster Filter Chips -->
+      <div class="graph-cluster-chips" id="graph-cluster-chips">
+        <button type="button" class="graph-cluster-chip active" data-cluster="all" onclick="filterGraphCluster('all')">
+          All ({{ graph_data.total_nodes }})
+        </button>
+        {% for cl in graph_data.clusters %}
+        <button type="button" class="graph-cluster-chip" data-cluster="{{ cl.name }}" onclick="filterGraphCluster('{{ cl.name }}')">
+          <span class="graph-cluster-dot" style="background: {{ cl.color }};"></span>
+          {{ cl.name }} ({{ cl.count }})
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="graph-header-controls">
+      <button type="button" class="graph-control-btn" onclick="graphZoom(1.2)" title="Zoom In (+)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+      </button>
+      <button type="button" class="graph-control-btn" onclick="graphZoom(0.8)" title="Zoom Out (-)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+      </button>
+      <button type="button" class="graph-control-btn" onclick="graphResetCenter()" title="Center view">
+        ⟲ Center
+      </button>
+      <button type="button" class="graph-control-btn" id="btn-toggle-physics" onclick="graphTogglePhysics()" title="Toggle layout physics">
+        Physics
+      </button>
+    </div>
+  </div>
+
+  <!-- Canvas Container -->
+  <div class="graph-canvas-container" id="graph-canvas-container">
+    <canvas id="network-graph-canvas"></canvas>
+
+    <!-- Floating Tooltip -->
+    <div id="graph-tooltip" class="graph-tooltip"></div>
+
+    <!-- Slide-over Inspector Drawer -->
+    <aside id="graph-node-drawer" class="graph-node-drawer" aria-label="Contact Inspector">
+      <button type="button" class="drawer-close-btn" onclick="closeGraphDrawer()" aria-label="Close Drawer">
+        ✕
+      </button>
+      <div id="graph-drawer-content">
+        <!-- Dynamically populated on node click -->
+      </div>
+    </aside>
+  </div>
+</div>
+
+
+{% if disconnected_persons %}
+<section class="disconnected-section" id="disconnected-section">
+  <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--text-muted);">
+    Disconnected People in Database ({{ disconnected_persons | length }})
+  </h3>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Company</th>
+          <th>Job Title</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in disconnected_persons %}
+        <tr id="disconnected-row-{{ p.id }}">
+          <td><strong>{{ p.display_name }}</strong></td>
+          <td>{{ p.company or "—" }}</td>
+          <td>{{ p.job_title or "—" }}</td>
+          <td>
+            <form action="/contacts/{{ p.id }}/reconnect" method="post" style="display:inline;">
+              <button type="submit" class="btn btn-secondary btn-sm" id="btn-reconnect-{{ p.id }}">
+                Reconnect to Focal Person
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+{% endif %}
+
+<script>
+function toggleSplitDrawer() {
+  var panel = document.getElementById('ai-split-panel');
+  if (!panel) return;
+  if (panel.style.display === 'none' || panel.style.display === '') {
+    panel.style.display = 'block';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    var input = document.getElementById('split-prompt-input');
+    if (input) input.focus();
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+function setSplitPrompt(text) {
+  var input = document.getElementById('split-prompt-input');
+  if (input) {
+    input.value = text;
+    input.focus();
+  }
+}
+
+function toggleFilters() {
+  var panel = document.getElementById('filter-dashboard');
+  if (!panel) return;
+  if (panel.style.display === 'none' || panel.style.display === '') {
+    panel.style.display = 'block';
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+function toggleEditProfile() {
+  var drawer = document.getElementById('profile-edit-drawer');
+  if (!drawer) return;
+  if (drawer.style.display === 'none' || drawer.style.display === '') {
+    drawer.style.display = 'block';
+    drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } else {
+    drawer.style.display = 'none';
+  }
+}
+
+// Fast Search: live instant filtering + sync
+document.addEventListener('DOMContentLoaded', function() {
+  var searchInput = document.getElementById('contacts-search-input');
+  if (!searchInput) return;
+
+  var filterInput = document.getElementById('search-input');
+  var cards = document.querySelectorAll('.contact-card');
+  var countBadge = document.getElementById('stat-connected-contacts');
+  var initialBadgeHtml = countBadge ? countBadge.innerHTML : '';
+
+  function performLiveFilter(query) {
+    var q = query.trim().toLowerCase();
+    var visibleCount = 0;
+
+    cards.forEach(function(card) {
+      var text = card.textContent.toLowerCase();
+      var matches = !q || text.indexOf(q) !== -1;
+      card.style.display = matches ? '' : 'none';
+      if (matches) visibleCount++;
+    });
+
+    // Also hide/show group sections if all contacts in group are hidden
+    var groups = document.querySelectorAll('.group-section');
+    groups.forEach(function(sec) {
+      var secCards = sec.querySelectorAll('.contact-card');
+      var anyVisible = false;
+      secCards.forEach(function(c) {
+        if (c.style.display !== 'none') anyVisible = true;
+      });
+      sec.style.display = anyVisible ? '' : 'none';
+    });
+
+    // Update count pill
+    if (countBadge) {
+      if (q) {
+        countBadge.innerHTML = 'Showing: <strong>' + visibleCount + '</strong> of ' + cards.length;
+      } else {
+        countBadge.innerHTML = initialBadgeHtml;
+      }
+    }
+  }
+
+  // Fast Search: live instant filtering + sync
+  searchInput.addEventListener('input', function() {
+    if (filterInput) filterInput.value = this.value;
+    performLiveFilter(this.value);
+    if (typeof liveFilterGraph === 'function') {
+      liveFilterGraph(this.value);
+    }
+  });
+
+  // Focus shortcut: press "/" anywhere to jump straight to fast search
+  document.addEventListener('keydown', function(e) {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      searchInput.focus();
+      searchInput.select();
+    }
+  });
+
+  // Check initial view mode from URL or localStorage
+  var urlParams = new URLSearchParams(window.location.search);
+  var initialView = urlParams.get('view') || localStorage.getItem('inner_circle_view_mode') || 'list';
+  if (initialView === 'graph') {
+    setViewMode('graph');
+  }
+});
+
+function toggleAddTaskCard() {
+  const card = document.getElementById('add-task-card');
+  if (!card) return;
+  const isHidden = card.style.display === 'none' || card.style.display === '';
+  card.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) {
+    const input = document.getElementById('task_title');
+    if (input) input.focus();
+  }
+}
+
+/* ==========================================================================
+   VIEW SWITCHER LOGIC (List vs Graph)
+   ========================================================================== */
+function setViewMode(mode) {
+  var listContainer = document.getElementById('contacts-list-container');
+  var graphContainer = document.getElementById('contacts-graph-container');
+  var btnList = document.getElementById('btn-view-list');
+  var btnGraph = document.getElementById('btn-view-graph');
+
+  if (!listContainer || !graphContainer) return;
+
+  if (mode === 'graph') {
+    listContainer.style.display = 'none';
+    graphContainer.style.display = 'block';
+    if (btnList) btnList.classList.remove('active');
+    if (btnGraph) btnGraph.classList.add('active');
+    localStorage.setItem('inner_circle_view_mode', 'graph');
+
+    // Update URL query param without reload
+    var url = new URL(window.location.href);
+    url.searchParams.set('view', 'graph');
+    window.history.replaceState(null, '', url.toString());
+
+    // Initialize or resize graph canvas
+    if (window.graphInstance) {
+      window.graphInstance.resize();
+    } else {
+      initNetworkGraph();
+    }
+  } else {
+    listContainer.style.display = 'block';
+    graphContainer.style.display = 'none';
+    if (btnList) btnList.classList.add('active');
+    if (btnGraph) btnGraph.classList.remove('active');
+    localStorage.setItem('inner_circle_view_mode', 'list');
+
+    var url = new URL(window.location.href);
+    url.searchParams.delete('view');
+    window.history.replaceState(null, '', url.toString());
+  }
+}
+
+/* ==========================================================================
+   INTERACTIVE NETWORK GRAPH ENGINE (Planar Radial Layout + Physics)
+   ========================================================================== */
+var graphData = {{ graph_json | safe }};
+
+function initNetworkGraph() {
+  var canvas = document.getElementById('network-graph-canvas');
+  var container = document.getElementById('graph-canvas-container');
+  var tooltip = document.getElementById('graph-tooltip');
+  var drawer = document.getElementById('graph-node-drawer');
+  var drawerContent = document.getElementById('graph-drawer-content');
+
+  if (!canvas || !container || !graphData || !graphData.nodes) return;
+
+  var ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  // Graph state
+  var width = 0;
+  var height = 0;
+  var dpr = window.devicePixelRatio || 1;
+  var panX = 0;
+  var panY = 0;
+  var zoom = 1.0;
+  var isPanning = false;
+  var startMouseX = 0;
+  var startMouseY = 0;
+  var hoveredNode = null;
+  var selectedNode = null;
+  var draggedNode = null;
+  var isPhysicsActive = true;
+  var activeClusterFilter = 'all';
+  var activeSearchQuery = '';
+  var animFrameId = null;
+  var pulseTime = 0;
+
+  // Setup nodes map
+  var nodes = graphData.nodes.map(function(n) {
+    return {
+      id: n.id,
+      name: n.name,
+      jobTitle: n.job_title,
+      company: n.company,
+      location: n.location,
+      education: n.education,
+      interests: n.interests || [],
+      contextLabels: n.context_labels || [],
+      lastInteraction: n.last_interaction,
+      summary: n.summary,
+      tasksCount: n.tasks_count || 0,
+      avatar: n.avatar || '?',
+      isFocal: !!n.is_focal,
+      cluster: n.cluster || 'Other',
+      clusterColor: n.cluster_color || '#818cf8',
+      splitRationale: n.split_rationale,
+      x: n.x || 0,
+      y: n.y || 0,
+      targetX: n.x || 0,
+      targetY: n.y || 0,
+      vx: 0,
+      vy: 0,
+      radius: n.is_focal ? 28 : 17,
+      isPinned: !!n.is_focal
+    };
+  });
+
+  var nodeMap = {};
+  nodes.forEach(function(n) { nodeMap[n.id] = n; });
+
+  // Setup edges
+  var edges = graphData.edges.map(function(e) {
+    return {
+      id: e.id,
+      source: nodeMap[e.source],
+      target: nodeMap[e.target],
+      context: e.context || '',
+      connectedOn: e.connected_on,
+      isFocalEdge: !!e.is_focal_edge
+    };
+  }).filter(function(e) { return e.source && e.target; });
+
+  function resize() {
+    var rect = container.getBoundingClientRect();
+    width = rect.width;
+    height = rect.height || 680;
+    dpr = window.devicePixelRatio || 1;
+
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+
+    ctx.resetTransform();
+    ctx.scale(dpr, dpr);
+  }
+
+  // Coordinate transforms
+  function toScreenX(graphX) {
+    return (width / 2) + panX + (graphX * zoom);
+  }
+  function toScreenY(graphY) {
+    return (height / 2) + panY + (graphY * zoom);
+  }
+  function toGraphX(screenX) {
+    return (screenX - (width / 2) - panX) / zoom;
+  }
+  function toGraphY(screenY) {
+    return (screenY - (height / 2) - panY) / zoom;
+  }
+
+  // Node Match Checker (Cluster + Search Query)
+  function isNodeVisible(n) {
+    if (activeClusterFilter !== 'all' && !n.isFocal && n.cluster !== activeClusterFilter) {
+      return false;
+    }
+    if (activeSearchQuery) {
+      if (n.isFocal) return true;
+      var q = activeSearchQuery.toLowerCase();
+      var text = (n.name + ' ' + n.company + ' ' + n.jobTitle + ' ' + n.location + ' ' + n.education + ' ' + n.cluster).toLowerCase();
+      return text.indexOf(q) !== -1;
+    }
+    return true;
+  }
+
+  // Physics Simulation Step
+  function stepPhysics() {
+    if (!isPhysicsActive) return;
+
+    for (var i = 0; i < nodes.length; i++) {
+      var n1 = nodes[i];
+      if (n1.isFocal) {
+        n1.x = 0;
+        n1.y = 0;
+        n1.vx = 0;
+        n1.vy = 0;
+        continue;
+      }
+      if (n1 === draggedNode) continue;
+
+      // Spring force toward planar target position
+      var dxT = n1.targetX - n1.x;
+      var dyT = n1.targetY - n1.y;
+      n1.vx += dxT * 0.04;
+      n1.vy += dyT * 0.04;
+
+      // Coulomb repulsion from all other nodes
+      for (var j = i + 1; j < nodes.length; j++) {
+        var n2 = nodes[j];
+        var dx = n1.x - n2.x;
+        var dy = n1.y - n2.y;
+        var distSq = (dx * dx) + (dy * dy);
+        var minDist = n1.radius + n2.radius + 20;
+
+        if (distSq < (minDist * minDist) && distSq > 0.01) {
+          var dist = Math.sqrt(distSq);
+          var force = (minDist - dist) * 0.15;
+          var nx = dx / dist;
+          var ny = dy / dist;
+
+          if (!n1.isPinned) {
+            n1.vx += nx * force;
+            n1.vy += ny * force;
+          }
+          if (!n2.isPinned) {
+            n2.vx -= nx * force;
+            n2.vy -= ny * force;
+          }
+        }
+      }
+
+      // Center repulsion to avoid overlapping the central focal person
+      var distCenterSq = (n1.x * n1.x) + (n1.y * n1.y);
+      if (distCenterSq < (80 * 80) && distCenterSq > 0.01) {
+        var dc = Math.sqrt(distCenterSq);
+        var push = (80 - dc) * 0.2;
+        n1.vx += (n1.x / dc) * push;
+        n1.vy += (n1.y / dc) * push;
+      }
+
+      // Damping and integration
+      n1.vx *= 0.86;
+      n1.vy *= 0.86;
+      n1.x += n1.vx;
+      n1.y += n1.vy;
+    }
+  }
+
+  // Draw Function
+  function render() {
+    ctx.clearRect(0, 0, width, height);
+    pulseTime += 0.035;
+
+    // 1. Draw subtle background radar orbit rings centered on focal person
+    var screenCenterX = toScreenX(0);
+    var screenCenterY = toScreenY(0);
+    var orbitRadii = [210, 275, 340, 405];
+
+    ctx.save();
+    orbitRadii.forEach(function(r) {
+      var sr = r * zoom;
+      if (sr > 10 && sr < Math.max(width, height) * 2) {
+        ctx.beginPath();
+        ctx.arc(screenCenterX, screenCenterY, sr, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 6]);
+        ctx.stroke();
+      }
+    });
+    ctx.restore();
+
+    // 2. Draw Edges
+    edges.forEach(function(e) {
+      var s = e.source;
+      var t = e.target;
+      var sVis = isNodeVisible(s);
+      var tVis = isNodeVisible(t);
+
+      var isHighlighted = (hoveredNode && (s.id === hoveredNode.id || t.id === hoveredNode.id)) ||
+                          (selectedNode && (s.id === selectedNode.id || t.id === selectedNode.id));
+      var isDimmed = !sVis || !tVis || (hoveredNode && !isHighlighted);
+
+      var sx = toScreenX(s.x);
+      var sy = toScreenY(s.y);
+      var tx = toScreenX(t.x);
+      var ty = toScreenY(t.y);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(tx, ty);
+
+      if (isHighlighted) {
+        ctx.strokeStyle = t.clusterColor || '#818cf8';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = t.clusterColor || '#818cf8';
+        ctx.shadowBlur = 8;
+        ctx.globalAlpha = 0.95;
+      } else if (isDimmed) {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.lineWidth = 0.8;
+        ctx.globalAlpha = 0.15;
+      } else if (e.isFocalEdge) {
+        ctx.strokeStyle = t.clusterColor ? t.clusterColor : 'rgba(255, 255, 255, 0.18)';
+        ctx.lineWidth = 1.2;
+        ctx.globalAlpha = 0.35;
+      } else {
+        // Cross-contact edge
+        ctx.strokeStyle = '#2dd4bf';
+        ctx.setLineDash([3, 3]);
+        ctx.lineWidth = 1.0;
+        ctx.globalAlpha = 0.45;
+      }
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    // 3. Draw Nodes
+    nodes.forEach(function(n) {
+      var isVis = isNodeVisible(n);
+      var isHovered = hoveredNode && hoveredNode.id === n.id;
+      var isSelected = selectedNode && selectedNode.id === n.id;
+      var isConnectedToHovered = hoveredNode && edges.some(function(e) {
+        return (e.source.id === hoveredNode.id && e.target.id === n.id) ||
+               (e.target.id === hoveredNode.id && e.source.id === n.id);
+      });
+
+      var sx = toScreenX(n.x);
+      var sy = toScreenY(n.y);
+      var r = n.radius * zoom;
+      r = Math.max(8, Math.min(60, r));
+
+      var alpha = 1.0;
+      if (!isVis) {
+        alpha = 0.15;
+      } else if (hoveredNode && !isHovered && !isConnectedToHovered && !n.isFocal) {
+        alpha = 0.25;
+      }
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+
+      if (n.isFocal) {
+        // --- Focal Node (Center) ---
+        // Subtle ambient ring
+        ctx.beginPath();
+        ctx.arc(sx, sy, r + 6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(37, 99, 235, 0.1)';
+        ctx.fill();
+
+        // Inner calm slate-blue gradient orb
+        var grad = ctx.createRadialGradient(sx - (r * 0.3), sy - (r * 0.3), r * 0.1, sx, sy, r);
+        grad.addColorStop(0, '#3b82f6');
+        grad.addColorStop(0.7, '#2563eb');
+        grad.addColorStop(1, '#1d4ed8');
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.shadowColor = '#2563eb';
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.lineWidth = 2.0;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        // Avatar text
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold ' + Math.max(10, Math.round(11 * zoom)) + 'px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(n.avatar || 'ORG', sx, sy);
+
+        // Name label
+        if (zoom > 0.45) {
+          ctx.font = 'bold ' + Math.max(11, Math.round(12 * zoom)) + 'px Inter, sans-serif';
+          ctx.fillStyle = '#93c5fd';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillText(n.name, sx, sy + r + 5);
+        }
+      } else {
+        // --- Contact Node ---
+        ctx.beginPath();
+        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.fillStyle = '#111827';
+        ctx.fill();
+
+        // Cluster colored border
+        ctx.lineWidth = isHovered || isSelected ? 3.5 : 2;
+        ctx.strokeStyle = isHovered || isSelected ? '#ffffff' : (n.clusterColor || '#818cf8');
+        if (isHovered || isSelected) {
+          ctx.shadowColor = n.clusterColor || '#818cf8';
+          ctx.shadowBlur = 10;
+        }
+        ctx.stroke();
+
+        // Avatar initials
+        ctx.fillStyle = isHovered ? '#ffffff' : (n.clusterColor || '#cbd5e1');
+        ctx.font = 'bold ' + Math.max(9, Math.round(9.5 * zoom)) + 'px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(n.avatar, sx, sy);
+
+        // Pending Tasks Badge
+        if (n.tasksCount > 0) {
+          var bx = sx + (r * 0.7);
+          var by = sy - (r * 0.7);
+          var br = Math.max(5, Math.round(6.5 * zoom));
+          ctx.beginPath();
+          ctx.arc(bx, by, br, 0, Math.PI * 2);
+          ctx.fillStyle = '#f43f5e';
+          ctx.fill();
+          ctx.strokeStyle = '#080c14';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold ' + Math.max(7, Math.round(7.5 * zoom)) + 'px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(n.tasksCount + '', bx, by);
+        }
+
+        // Labels
+        if (zoom > 0.55 || isHovered || isSelected) {
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+
+          // Name label
+          ctx.font = (isHovered ? 'bold ' : '600 ') + Math.max(10, Math.round(11 * zoom)) + 'px Inter, sans-serif';
+          ctx.fillStyle = isHovered ? '#ffffff' : '#f1f5f9';
+          ctx.fillText(n.name, sx, sy + r + 4);
+
+          // Subtitle (Company or Context)
+          if (zoom > 0.75 && (n.company || n.cluster)) {
+            ctx.font = '400 ' + Math.max(9, Math.round(9 * zoom)) + 'px Inter, sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            var sub = n.company || n.cluster;
+            if (sub.length > 22) sub = sub.slice(0, 20) + '...';
+            ctx.fillText(sub, sx, sy + r + 18);
+          }
+        }
+      }
+
+      ctx.restore();
+    });
+  }
+
+  // Animation Loop
+  function loop() {
+    stepPhysics();
+    render();
+    animFrameId = requestAnimationFrame(loop);
+  }
+
+  // Find node under mouse
+  function getNodeAt(screenX, screenY) {
+    for (var i = nodes.length - 1; i >= 0; i--) {
+      var n = nodes[i];
+      if (!isNodeVisible(n)) continue;
+      var sx = toScreenX(n.x);
+      var sy = toScreenY(n.y);
+      var r = Math.max(14, (n.radius + 6) * zoom);
+      var dx = screenX - sx;
+      var dy = screenY - sy;
+      if ((dx * dx) + (dy * dy) <= (r * r)) {
+        return n;
+      }
+    }
+    return null;
+  }
+
+  // Tooltip display
+  function showTooltip(n, screenX, screenY) {
+    if (!tooltip) return;
+    if (!n) {
+      tooltip.classList.remove('visible');
+      return;
+    }
+
+    var html = '<div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem;">';
+    html += '<div style="width:28px; height:28px; border-radius:50%; background:' + (n.clusterColor || '#6366f1') + '; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.75rem;">' + n.avatar + '</div>';
+    html += '<div>';
+    html += '<strong style="color:#fff; font-size:0.875rem; display:block;">' + n.name + '</strong>';
+    if (n.jobTitle || n.company) {
+      html += '<span style="font-size:0.75rem; color:#94a3b8;">' + (n.jobTitle || '') + (n.jobTitle && n.company ? ' at ' : '') + (n.company || '') + '</span>';
+    }
+    html += '</div></div>';
+
+    if (n.location) {
+      html += '<div style="font-size:0.75rem; color:#cbd5e1; margin-bottom:0.25rem;">📍 ' + n.location + '</div>';
+    }
+    if (n.lastInteraction) {
+      html += '<div style="font-size:0.725rem; color:#38bdf8; margin-bottom:0.25rem;">🗓️ Last contact: ' + n.lastInteraction + '</div>';
+    }
+    if (n.tasksCount > 0) {
+      html += '<div style="font-size:0.725rem; color:#93c5fd; margin-bottom:0.25rem;">📋 ' + n.tasksCount + ' upcoming task' + (n.tasksCount > 1 ? 's' : '') + '</div>';
+    }
+    if (n.splitRationale) {
+      html += '<div style="font-size:0.7rem; color:#bfdbfe; background:rgba(37,99,235,0.15); border-radius:4px; padding:2px 6px; margin:3px 0;">🏷️ ' + n.splitRationale + '</div>';
+    }
+    if (n.summary) {
+      var sumExcerpt = n.summary.length > 90 ? n.summary.slice(0, 87) + '...' : n.summary;
+      html += '<div style="font-size:0.725rem; color:#e2e8f0; font-style:italic; border-left:2px solid ' + (n.clusterColor || '#6366f1') + '; padding-left:0.4rem; margin:0.35rem 0;">' + sumExcerpt + '</div>';
+    }
+    html += '<div style="font-size:0.7rem; color:#60a5fa; margin-top:0.35rem; font-weight:600;">Click to inspect details & tasks &rarr;</div>';
+
+    tooltip.innerHTML = html;
+    tooltip.style.left = screenX + 'px';
+    tooltip.style.top = screenY + 'px';
+    tooltip.classList.add('visible');
+  }
+
+  // Slide-over Drawer
+  function openDrawer(n) {
+    if (!drawer || !drawerContent) return;
+    selectedNode = n;
+
+    var html = '<div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem; padding-right:1.5rem;">';
+    html += '<div style="width:48px; height:48px; border-radius:50%; background:' + (n.clusterColor || '#6366f1') + '; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.1rem; flex-shrink:0;">' + n.avatar + '</div>';
+    html += '<div>';
+    html += '<h3 style="margin:0; font-size:1.15rem; color:#fff;">' + n.name + '</h3>';
+    html += '<p style="margin:0; font-size:0.825rem; color:#94a3b8;">' + (n.jobTitle || 'Role unrecorded') + (n.company ? ' at ' + n.company : '') + '</p>';
+    html += '</div></div>';
+
+    // Meta chips
+    html += '<div style="display:flex; flex-wrap:wrap; gap:0.35rem; margin-bottom:1.25rem;">';
+    if (n.location) html += '<span class="profile-chip" style="font-size:0.75rem;">📍 ' + n.location + '</span>';
+    if (n.education) html += '<span class="profile-chip" style="font-size:0.75rem; color:#fde047;">🎓 ' + n.education + '</span>';
+    if (n.cluster) html += '<span class="profile-chip" style="font-size:0.75rem; color:' + n.clusterColor + ';">🏷️ ' + n.cluster + '</span>';
+    html += '</div>';
+
+    // Split Rationale if active
+    if (n.splitRationale) {
+      html += '<div style="background:rgba(37,99,235,0.1); border:1px solid rgba(37,99,235,0.25); border-radius:var(--radius-sm); padding:0.6rem 0.8rem; margin-bottom:1.25rem; font-size:0.8rem; color:#e0e7ff;">';
+      html += '<div style="font-size:0.7rem; font-weight:700; color:#93c5fd; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">Grouping Rationale (' + (n.cluster || 'Group') + ')</div>';
+      html += '<div>' + n.splitRationale + '</div>';
+      html += '</div>';
+    }
+
+    // AI Relationship Summary Card
+    html += '<div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:0.875rem; margin-bottom:1.25rem;">';
+    html += '<div style="font-size:0.75rem; font-weight:700; color:#818cf8; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Relationship Summary</div>';
+    html += '<p style="font-size:0.85rem; color:#e2e8f0; line-height:1.5; margin:0;">' + (n.summary || 'No interaction notes logged yet.') + '</p>';
+    html += '</div>';
+
+    // Last Touchpoint & Context
+    if (n.lastInteraction || n.contextLabels.length > 0) {
+      html += '<div style="margin-bottom:1.25rem; font-size:0.8rem; color:#94a3b8;">';
+      if (n.lastInteraction) html += '<div>🗓️ <strong>Last Contact:</strong> ' + n.lastInteraction + '</div>';
+      if (n.contextLabels.length > 0) html += '<div>👥 <strong>Relationship:</strong> ' + n.contextLabels.join(', ') + '</div>';
+      html += '</div>';
+    }
+
+    // Action button
+    if (!n.isFocal) {
+      html += '<div style="margin-top:auto; padding-top:1rem; border-top:1px solid var(--border-subtle);">';
+      html += '<a href="/contacts/' + n.id + '" class="btn btn-primary" style="width:100%; justify-content:center; display:flex;">';
+      html += 'Open Profile & Conversations &rarr;';
+      html += '</a></div>';
+    }
+
+    drawerContent.innerHTML = html;
+    drawer.classList.add('open');
+  }
+
+  window.closeGraphDrawer = function() {
+    if (drawer) drawer.classList.remove('open');
+    selectedNode = null;
+  };
+
+  // Canvas Mouse Events
+  container.addEventListener('mousedown', function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var mx = e.clientX - rect.left;
+    var my = e.clientY - rect.top;
+
+    var hit = getNodeAt(mx, my);
+    if (hit) {
+      draggedNode = hit;
+      draggedNode.vx = 0;
+      draggedNode.vy = 0;
+    } else {
+      isPanning = true;
+      startMouseX = e.clientX - panX;
+      startMouseY = e.clientY - panY;
+      container.classList.add('panning');
+    }
+  });
+
+  window.addEventListener('mousemove', function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var mx = e.clientX - rect.left;
+    var my = e.clientY - rect.top;
+
+    if (draggedNode) {
+      draggedNode.x = toGraphX(mx);
+      draggedNode.y = toGraphY(my);
+      draggedNode.vx = 0;
+      draggedNode.vy = 0;
+      showTooltip(draggedNode, mx, my);
+      return;
+    }
+
+    if (isPanning) {
+      panX = e.clientX - startMouseX;
+      panY = e.clientY - startMouseY;
+      return;
+    }
+
+    // Hover detection
+    var hit = getNodeAt(mx, my);
+    if (hit !== hoveredNode) {
+      hoveredNode = hit;
+      if (hit) {
+        container.style.cursor = 'pointer';
+        showTooltip(hit, mx, my);
+      } else {
+        container.style.cursor = 'grab';
+        showTooltip(null, 0, 0);
+      }
+    } else if (hit) {
+      showTooltip(hit, mx, my);
+    }
+  });
+
+  window.addEventListener('mouseup', function(e) {
+    if (draggedNode) {
+      draggedNode = null;
+    }
+    if (isPanning) {
+      isPanning = false;
+      container.classList.remove('panning');
+    }
+  });
+
+  // Canvas Click
+  canvas.addEventListener('click', function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var mx = e.clientX - rect.left;
+    var my = e.clientY - rect.top;
+
+    var hit = getNodeAt(mx, my);
+    if (hit) {
+      openDrawer(hit);
+    }
+  });
+
+  // Mouse Wheel Zoom
+  container.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    var rect = canvas.getBoundingClientRect();
+    var mx = e.clientX - rect.left;
+    var my = e.clientY - rect.top;
+
+    var zoomFactor = e.deltaY < 0 ? 1.12 : 0.89;
+    var newZoom = Math.max(0.3, Math.min(3.2, zoom * zoomFactor));
+
+    // Zoom centered on cursor
+    var graphX = toGraphX(mx);
+    var graphY = toGraphY(my);
+
+    zoom = newZoom;
+    panX = mx - (width / 2) - (graphX * zoom);
+    panY = my - (height / 2) - (graphY * zoom);
+  }, { passive: false });
+
+  // Public controls
+  window.graphZoom = function(factor) {
+    var newZoom = Math.max(0.3, Math.min(3.2, zoom * factor));
+    zoom = newZoom;
+  };
+
+  window.graphResetCenter = function() {
+    panX = 0;
+    panY = 0;
+    zoom = 1.0;
+  };
+
+  window.graphTogglePhysics = function() {
+    isPhysicsActive = !isPhysicsActive;
+    var btn = document.getElementById('btn-toggle-physics');
+    if (btn) {
+      btn.style.color = isPhysicsActive ? '#fde047' : '#9ca3af';
+    }
+  };
+
+  window.filterGraphCluster = function(clusterName) {
+    activeClusterFilter = clusterName;
+    var chips = document.querySelectorAll('.graph-cluster-chip');
+    chips.forEach(function(c) {
+      if (c.getAttribute('data-cluster') === clusterName) {
+        c.classList.add('active');
+      } else {
+        c.classList.remove('active');
+      }
+    });
+  };
+
+  window.liveFilterGraph = function(query) {
+    activeSearchQuery = query.trim();
+  };
+
+  window.addEventListener('resize', resize);
+  resize();
+  loop();
+
+  window.graphInstance = {
+    resize: resize
+  };
+}
+</script>
 
 {% endblock %}
